@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -16,20 +17,29 @@ import (
 
 var mtx sync.Mutex
 var globalCtx context.Context
-var httpServer *httpserver.HttpServer
+var daemon *httpserver.HttpServer
+var debug_log_enabled bool
 
-// StartDaemon initializes Lassie HTTP daemon listening on localhost and returns the port number.
+// InitDaemon initializes Lassie HTTP daemon listening on localhost and returns the port number.
 // The daemon is a singleton - there can be only one instance running in the host process.
 //
-//export StartDaemon
-func StartDaemon() uint16 {
+// **Important:** This function does not run the request handler, you must call RunDaemon().
+//
+//export InitDaemon
+func InitDaemon(debug_log bool) uint16 {
+	// We cannot use debug() here because the global debug_log variable was not initialized yet
+	if debug_log {
+		print_debug("InitDaemon locking the mutex")
+	}
+
 	mtx.Lock()
 	defer mtx.Unlock()
+	debug_log_enabled = debug_log
+	defer debug("InitDaemon lock released")
 
 	if globalCtx != nil {
-		// The server is already running
-		return getPort()
-
+		// FIXME - handle errors
+		panic("cannot create more than one Lassie daemon")
 	}
 
 	globalCtx = context.Background()
@@ -61,7 +71,7 @@ func StartDaemon() uint16 {
 		panic(fmt.Sprintf("cannot create Lassie instance: %s", err))
 	}
 
-	httpServer, err = httpserver.NewHttpServer(globalCtx, lassie, httpserver.HttpServerConfig{
+	daemon, err = httpserver.NewHttpServer(globalCtx, lassie, httpserver.HttpServerConfig{
 		Address: "127.0.0.1",
 		// FIXME: make this configurable
 		Port: 0,
@@ -77,46 +87,67 @@ func StartDaemon() uint16 {
 		panic(fmt.Sprintf("cannot start the HTTP server: %s", err))
 	}
 
-	go func() {
-		err := httpServer.Start()
-		if err != nil {
-			// FIXME - handle errors
-			panic(fmt.Sprintf("Lassie HTTP server error: %s", err))
-		}
-	}()
-
-	// FIXME: if we don't print to stdout, then the coroutine running the server handler
-	// does not start soon enough and the Rust side cannot make HTTP requests because
-	// connections are refused on the Go side
-	//
-	time.Sleep(1000 * time.Millisecond)
-	fmt.Println("server listening on", httpServer.Addr())
-
 	return getPort()
+}
+
+// Run the daemon (the HTTP request handler). You should call this function from a dedicated
+// OS-level thread.
+//
+// **Important:** This function does not exit until you call StopDaemon from a different thread.
+//
+//export RunDaemon
+func RunDaemon() {
+	server := getDaemon()
+
+	if server == nil {
+		// The server may have been cleaned by now if StopDaemon was calling quickly enough
+		return
+	}
+
+	debug("RUNNING LASSIE HANDLER")
+	err := server.Start()
+	debug("LASSIE HANDLER EXITED:", err)
+	if err != nil {
+		// FIXME - handle errors
+		panic(fmt.Sprintf("Lassie HTTP server error: %s", err))
+	}
+}
+
+func getDaemon() *httpserver.HttpServer {
+	debug("RunDaemon locking the mutex")
+	mtx.Lock()
+	defer mtx.Unlock()
+	defer debug("RunDaemon lock released")
+
+	return daemon
 }
 
 // CloseDaemon stops the Lassie HTTP daemon.
 //
 //export StopDaemon
 func StopDaemon() {
+	debug("StopDaemon locking the mutex")
 	mtx.Lock()
 	defer mtx.Unlock()
+	defer debug("StopDaemon lock released")
 
-	err := httpServer.Close()
+	debug("STOPPING LASSIE HANDLER")
+	err := daemon.Close()
+	debug("STOP ERROR?", err)
 	if err != nil {
 		// FIXME - handle errors
 		panic(fmt.Sprintf("Cannot stop Lassie HTTP server: %s", err))
 	}
 
 	globalCtx = nil
-	httpServer = nil
+	daemon = nil
 }
 
 func getPort() uint16 {
-	_, portStr, err := net.SplitHostPort(httpServer.Addr())
+	_, portStr, err := net.SplitHostPort(daemon.Addr())
 	if err != nil {
 		// FIXME - handle errors
-		panic(fmt.Sprintf("cannot parse server address `%s`: %s", httpServer.Addr(), err))
+		panic(fmt.Sprintf("cannot parse server address `%s`: %s", daemon.Addr(), err))
 	}
 	port, err := strconv.ParseUint(portStr, 10, 16)
 	if err != nil {
@@ -125,6 +156,17 @@ func getPort() uint16 {
 	}
 
 	return uint16(port)
+}
+
+func debug(a ...any) {
+	if debug_log_enabled {
+		print_debug(a...)
+	}
+}
+
+func print_debug(a ...any) {
+	fmt.Fprintf(os.Stderr, "[LASSIE GO WRAPPER] ")
+	fmt.Fprintln(os.Stderr, a...)
 }
 
 func main() {}
