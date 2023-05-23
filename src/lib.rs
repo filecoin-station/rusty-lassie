@@ -49,11 +49,10 @@ mod test {
         if response.status() != 200 {}
 
         assert_eq!(response.status(), 200);
-        // FIXME
-        // assert_eq!(
-        //     response.header("Content-Type"),
-        //     Some("application/vnd.ipld.car")
-        // );
+        assert_eq!(
+            response.header("Content-Type"),
+            Some("application/vnd.ipld.car; version=1")
+        );
 
         let mut content = Vec::new();
         response

@@ -149,6 +149,8 @@ github.com/filecoin-project/go-statestore v0.2.0 h1:cRRO0aPLrxKQCZ2UOQbzFGn4WDNd
 github.com/filecoin-project/go-statestore v0.2.0/go.mod h1:8sjBYbS35HwPzct7iT4lIXjLlYyPor80aU7t7a/Kspo=
 github.com/filecoin-project/lassie v0.10.0 h1:vX4M7jAAZvRBcwB0Q3w/cn2pTfDJApJNP2d1M5T4SqI=
 github.com/filecoin-project/lassie v0.10.0/go.mod h1:k1MRyAfI7V49WQZPPleLPJJFUN6Iq7LH6iqmeKoXu+8=
+github.com/filecoin-project/lassie v0.10.1-0.20230523060258-822b738e4375 h1:JTrHTgsHk4rMSq2INtljEmEpQI048p2Z55YJSxoEFKM=
+github.com/filecoin-project/lassie v0.10.1-0.20230523060258-822b738e4375/go.mod h1:VgBHNFyWiLBB14gkJGclH5/qqkAV8Xlr9bEO6PrsFRs=
 github.com/filecoin-project/specs-actors v0.9.4/go.mod h1:BStZQzx5x7TmCkLv0Bpa07U6cPKol6fd3w9KjMPZ6Z4=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/flynn/noise v1.0.0 h1:DlTHqmzmvcEiKj+4RYo/imoswx/4r6iBlCMfVtrMXpQ=
@@ -383,6 +385,8 @@ github.com/ipfs/go-peertaskqueue v0.8.1 h1:YhxAs1+wxb5jk7RvS0LHdyiILpNmRIRnZVzte
 github.com/ipfs/go-peertaskqueue v0.8.1/go.mod h1:Oxxd3eaK279FxeydSPPVGHzbwVeHjatZ2GA8XD+KbPU=
 github.com/ipfs/go-unixfsnode v1.6.0 h1:JOSA02yaLylRNi2rlB4ldPr5VcZhcnaIVj5zNLcOjDo=
 github.com/ipfs/go-unixfsnode v1.6.0/go.mod h1:PVfoyZkX1B34qzT3vJO4nsLUpRCyhnMuHBznRcXirlk=
+github.com/ipfs/go-unixfsnode v1.7.0 h1:OwRxGCed+WXP+esYYsRr8X7jqCMCoRlauBvDwGcK8ao=
+github.com/ipfs/go-unixfsnode v1.7.0/go.mod h1:PVfoyZkX1B34qzT3vJO4nsLUpRCyhnMuHBznRcXirlk=
 github.com/ipfs/go-verifcid v0.0.2 h1:XPnUv0XmdH+ZIhLGKg6U2vaPaRDXb9urMyNVCE7uvTs=
 github.com/ipfs/go-verifcid v0.0.2/go.mod h1:40cD9x1y4OWnFXbLNJYRe7MpNvWlMn3LZAG5Wb4xnPU=
 github.com/ipld/go-car/v2 v2.9.0 h1:mkMSfh9NpnfdFe30xBFTQiKZ6+LY+mwOPrq6r56xsPo=
