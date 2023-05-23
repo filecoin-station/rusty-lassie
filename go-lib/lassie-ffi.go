@@ -64,7 +64,7 @@ func StartDaemon() uint16 {
 	httpServer, err = httpserver.NewHttpServer(globalCtx, lassie, httpserver.HttpServerConfig{
 		Address: "127.0.0.1",
 		// FIXME: make this configurable
-		Port: 12345,
+		Port: 0,
 		// FIXME: make this configurable
 		TempDir: "",
 		// No limit.
@@ -84,6 +84,13 @@ func StartDaemon() uint16 {
 			panic(fmt.Sprintf("Lassie HTTP server error: %s", err))
 		}
 	}()
+
+	// FIXME: if we don't print to stdout, then the coroutine running the server handler
+	// does not start soon enough and the Rust side cannot make HTTP requests because
+	// connections are refused on the Go side
+	//
+	time.Sleep(1000 * time.Millisecond)
+	fmt.Println("server listening on", httpServer.Addr())
 
 	return getPort()
 }
