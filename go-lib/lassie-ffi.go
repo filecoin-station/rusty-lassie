@@ -16,7 +16,6 @@ import (
 )
 
 var mtx sync.Mutex
-var globalCtx context.Context
 var daemon *httpserver.HttpServer
 var debug_log_enabled bool
 
@@ -37,12 +36,10 @@ func InitDaemon(debug_log bool) uint16 {
 	debug_log_enabled = debug_log
 	defer debug("InitDaemon lock released")
 
-	if globalCtx != nil {
+	if daemon != nil {
 		// FIXME - handle errors
 		panic("cannot create more than one Lassie daemon")
 	}
-
-	globalCtx = context.Background()
 
 	lassieOpts := []lassie.LassieOption{lassie.WithProviderTimeout(20 * time.Second)}
 	lassieOpts = append(lassieOpts, lassie.WithGlobalTimeout(20*time.Second))
@@ -65,13 +62,15 @@ func InitDaemon(debug_log bool) uint16 {
 	// FIXME: configure tempDir
 	// lassieOpts = append(lassieOpts, lassie.WithTempDir(tempDir))
 
-	lassie, err := lassie.NewLassie(globalCtx, lassieOpts...)
+	ctx := context.Background()
+
+	lassie, err := lassie.NewLassie(ctx, lassieOpts...)
 	if err != nil {
 		// FIXME - handle errors
 		panic(fmt.Sprintf("cannot create Lassie instance: %s", err))
 	}
 
-	daemon, err = httpserver.NewHttpServer(globalCtx, lassie, httpserver.HttpServerConfig{
+	daemon, err = httpserver.NewHttpServer(ctx, lassie, httpserver.HttpServerConfig{
 		Address: "127.0.0.1",
 		// FIXME: make this configurable
 		Port: 0,
@@ -131,6 +130,11 @@ func StopDaemon() {
 	defer mtx.Unlock()
 	defer debug("StopDaemon lock released")
 
+	if daemon == nil {
+		// FIXME - handle errors
+		panic("Lassie daemon not running, cannot stop it")
+	}
+
 	debug("STOPPING LASSIE HANDLER")
 	err := daemon.Close()
 	debug("STOP ERROR?", err)
@@ -139,7 +143,6 @@ func StopDaemon() {
 		panic(fmt.Sprintf("Cannot stop Lassie HTTP server: %s", err))
 	}
 
-	globalCtx = nil
 	daemon = nil
 }
 
