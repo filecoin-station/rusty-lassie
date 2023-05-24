@@ -121,15 +121,14 @@ impl Daemon {
             port: config.port,
         };
 
-        let port = {
-            let result = unsafe { InitDaemon(&go_config) };
-            log::debug!("Lassie.InitDaemon result: {:?}", result);
-            if let Some(msg) = result.error() {
-                log::error!("Lassie.InitDaemon failed: {msg}");
-                return Err(StartError::Lassie(msg));
-            }
-            result.port
-        };
+        let result = unsafe { InitDaemon(&go_config) };
+        log::debug!("Lassie.InitDaemon result: {:?}", result);
+
+        if let Some(msg) = result.error() {
+            log::error!("Lassie.InitDaemon failed: {msg}");
+            return Err(StartError::Lassie(msg));
+        }
+        let port = result.port;
         log::debug!("Lassie.InitDaemon returned port: {port}");
 
         let handler_thread = std::thread::spawn(move || {
