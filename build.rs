@@ -19,9 +19,22 @@ fn main() {
         ])
         .status()
         .unwrap();
-    assert!(status.success());
+    assert!(status.success(), "`go build` failed");
 
     println!("cargo:rustc-link-search=native={}", out_dir);
+
+    let status = Command::new("go")
+        .current_dir("go-lib")
+        .args([
+            "tool",
+            "cgo",
+            "-exportheader",
+            "../target/lassie-ffi.h",
+            "lassie-ffi.go",
+        ])
+        .status()
+        .unwrap();
+    assert!(status.success(), "`cgo -exportheader` failed");
 
     add_platform_specific_link_flags();
 }
