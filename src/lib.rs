@@ -1,11 +1,23 @@
+use std::ffi::CString;
 use std::fmt::{Display, Formatter};
+use std::os::raw::c_char;
+use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
 #[link(name = "golassie")]
 extern "C" {
-    fn InitDaemon(debug_log: bool) -> u16;
+    fn InitDaemon(config: *const GoDaemonConfig) -> u16;
     fn RunDaemon();
     fn StopDaemon();
+}
+
+#[allow(dead_code)]
+#[repr(C)]
+struct GoDaemonConfig {
+    // this must be kept in sync with the definition of daemon_config_t in go-lib/lassie-ffi.go
+    temp_dir: *const c_char,
+    port: u16,
+    log_level: usize,
 }
 
 struct GoDaemon {
@@ -17,12 +29,18 @@ fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDae
     unsafe { DAEMON.lock() }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct DaemonConfig {
+    temp_dir: Option<PathBuf>,
+    port: u16,
+}
+
 pub struct Daemon {
     port: u16,
 }
 
 impl Daemon {
-    pub fn start() -> Result<Self, StartError> {
+    pub fn start(config: DaemonConfig) -> Result<Self, StartError> {
         log::debug!("[Daemon::start] Locking global daemon mutex");
         let mut maybe_daemon = get_global_daemon().map_err(|_| StartError::MutexPoisoned)?;
         if maybe_daemon.is_some() {
@@ -31,8 +49,32 @@ impl Daemon {
         }
 
         log::info!("Starting Lassie Daemon");
-        let debug_log_enabled = log::log_enabled!(log::Level::Debug);
-        let port = unsafe { InitDaemon(debug_log_enabled) };
+        let temp_dir = match config.temp_dir {
+            None => "".to_string(),
+            Some(dir) => {
+                let str = dir.to_str();
+                match str {
+                    None => return Err(StartError::PathIsNotValidUtf8(dir)),
+                    Some(val) => val.to_string(),
+                }
+            }
+        };
+
+        let temp_dir = CString::new(temp_dir.clone())
+            .map_err(|_| StartError::PathContainsNullByte(temp_dir))?;
+
+        let log_level = if log::log_enabled!(log::Level::Debug) {
+            log::LevelFilter::Debug
+        } else {
+            log::LevelFilter::Off
+        };
+        let go_config = GoDaemonConfig {
+            temp_dir: temp_dir.as_ptr(),
+            log_level: log_level as usize,
+            port: config.port,
+        };
+
+        let port = unsafe { InitDaemon(&go_config) };
 
         let handler_thread = std::thread::spawn(move || {
             log::debug!("Running Lassie HTTP handler");
@@ -73,6 +115,8 @@ impl Drop for Daemon {
 pub enum StartError {
     MutexPoisoned,
     OnlyOneInstanceAllowed,
+    PathContainsNullByte(String),
+    PathIsNotValidUtf8(PathBuf),
     // todo: Lassie errors
 }
 
@@ -84,6 +128,14 @@ impl Display for StartError {
             StartError::OnlyOneInstanceAllowed => {
                 f.write_str("cannot create more than one instance")
             }
+            StartError::PathContainsNullByte(path_str) => f.write_fmt(format_args!(
+                "null bytes are not allowed in paths (value: {:?})",
+                path_str
+            )),
+            StartError::PathIsNotValidUtf8(path) => f.write_fmt(format_args!(
+                "path that are not valid UTF-8 are not supported (value: {:?})",
+                path.display(),
+            )),
         }
     }
 }
@@ -101,7 +153,7 @@ mod test {
     fn start_daemon_and_request_cid() {
         let _lock = setup_test_env();
 
-        let daemon = Daemon::start().expect("cannot start Lassie");
+        let daemon = Daemon::start(DaemonConfig::default()).expect("cannot start Lassie");
         let port = daemon.port();
         assert!(port > 0, "Lassie is listening on non-zero port number");
 
@@ -150,16 +202,17 @@ mod test {
     #[test]
     fn can_start_after_stopping() {
         let _lock = setup_test_env();
-        let d = Daemon::start().expect("cannot start the first time");
+        let d = Daemon::start(DaemonConfig::default()).expect("cannot start the first time");
         drop(d);
-        let _ = Daemon::start().expect("cannot start the second time");
+        let _ = Daemon::start(DaemonConfig::default()).expect("cannot start the second time");
     }
 
     #[test]
     fn cannot_start_twice() {
         let _lock = setup_test_env();
-        let _first = Daemon::start().expect("cannot start the first instance");
-        match Daemon::start() {
+        let _first =
+            Daemon::start(DaemonConfig::default()).expect("cannot start the first instance");
+        match Daemon::start(DaemonConfig::default()) {
             Ok(_) => panic!("starting another instance should have failed"),
             Err(err) => assert_eq!(err, StartError::OnlyOneInstanceAllowed),
         };

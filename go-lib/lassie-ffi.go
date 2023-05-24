@@ -1,5 +1,20 @@
 package main
 
+// Log levels - matching Rust enum log::LevelFilter
+//  1 error
+//  2 warn
+//  3 info
+//  4 debug
+//  5 trace
+
+/*
+#include <stdint.h>
+typedef struct {
+	const char* temp_dir;
+	uint16_t port;
+	size_t log_level;
+} daemon_config_t;
+*/
 import "C"
 
 import (
@@ -25,7 +40,8 @@ var debug_log_enabled bool
 // **Important:** This function does not run the request handler, you must call RunDaemon().
 //
 //export InitDaemon
-func InitDaemon(debug_log bool) uint16 {
+func InitDaemon(cfg *C.daemon_config_t) uint16 {
+	debug_log := cfg.log_level <= 4
 	// We cannot use debug() here because the global debug_log variable was not initialized yet
 	if debug_log {
 		print_debug("InitDaemon locking the mutex")
@@ -39,6 +55,15 @@ func InitDaemon(debug_log bool) uint16 {
 	if daemon != nil {
 		// FIXME - handle errors
 		panic("cannot create more than one Lassie daemon")
+	}
+
+	var tempDir string = C.GoString(cfg.temp_dir)
+	if debug_log_enabled {
+		tempDirStr := "`" + tempDir + "`"
+		if tempDir == "" {
+			tempDirStr = "<empty>"
+		}
+		debug(fmt.Sprintf("Lassie configuration:\n  log_level=%d\n  port=%d\n  temp_dir=`%v`", cfg.log_level, cfg.port, tempDirStr))
 	}
 
 	lassieOpts := []lassie.LassieOption{lassie.WithProviderTimeout(20 * time.Second)}
@@ -59,8 +84,9 @@ func InitDaemon(debug_log bool) uint16 {
 	// TODO: configure bitswap concurrency
 	// lassieOpts = append(lassieOpts, lassie.WithBitswapConcurrency(bitswapConcurrency))
 
-	// FIXME: configure tempDir
-	// lassieOpts = append(lassieOpts, lassie.WithTempDir(tempDir))
+	if tempDir != "" {
+		lassieOpts = append(lassieOpts, lassie.WithTempDir(tempDir))
+	}
 
 	ctx := context.Background()
 
@@ -72,10 +98,8 @@ func InitDaemon(debug_log bool) uint16 {
 
 	daemon, err = httpserver.NewHttpServer(ctx, lassie, httpserver.HttpServerConfig{
 		Address: "127.0.0.1",
-		// FIXME: make this configurable
-		Port: 0,
-		// FIXME: make this configurable
-		TempDir: "",
+		Port:    uint(cfg.port),
+		TempDir: tempDir,
 		// No limit.
 		// TODO: I think we should expose this as a config option
 		MaxBlocksPerRequest: 0,
