@@ -8,12 +8,23 @@ package main
 //  5 trace
 
 /*
+#include <stdlib.h>
 #include <stdint.h>
+
 typedef struct {
 	const char* temp_dir;
 	uint16_t port;
 	size_t log_level;
 } daemon_config_t;
+
+typedef struct {
+	uint16_t port;
+	const char* error;
+} daemon_init_result_t;
+
+typedef struct {
+	const char * error;
+} result_t;
 */
 import "C"
 
@@ -25,6 +36,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/filecoin-project/lassie/pkg/lassie"
 	httpserver "github.com/filecoin-project/lassie/pkg/server/http"
@@ -34,13 +46,15 @@ var mtx sync.Mutex
 var daemon *httpserver.HttpServer
 var debug_log_enabled bool
 
+var OK C.result_t = C.result_t{error: nil}
+
 // InitDaemon initializes Lassie HTTP daemon listening on localhost and returns the port number.
 // The daemon is a singleton - there can be only one instance running in the host process.
 //
 // **Important:** This function does not run the request handler, you must call RunDaemon().
 //
 //export InitDaemon
-func InitDaemon(cfg *C.daemon_config_t) uint16 {
+func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 	debug_log := cfg.log_level <= 4
 	// We cannot use debug() here because the global debug_log variable was not initialized yet
 	if debug_log {
@@ -53,8 +67,7 @@ func InitDaemon(cfg *C.daemon_config_t) uint16 {
 	defer debug("InitDaemon lock released")
 
 	if daemon != nil {
-		// FIXME - handle errors
-		panic("cannot create more than one Lassie daemon")
+		return newInitError("cannot create more than one Lassie daemon", nil)
 	}
 
 	var tempDir string = C.GoString(cfg.temp_dir)
@@ -92,8 +105,7 @@ func InitDaemon(cfg *C.daemon_config_t) uint16 {
 
 	lassie, err := lassie.NewLassie(ctx, lassieOpts...)
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("cannot create Lassie instance: %s", err))
+		return newInitError("cannot create Lassie instance", err)
 	}
 
 	daemon, err = httpserver.NewHttpServer(ctx, lassie, httpserver.HttpServerConfig{
@@ -106,11 +118,59 @@ func InitDaemon(cfg *C.daemon_config_t) uint16 {
 	})
 
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("cannot start the HTTP server: %s", err))
+		return newInitError("cannot start the HTTP server", err)
 	}
 
-	return getPort()
+	port, err := getPort()
+	if err != nil {
+		return newInitError("cannot parse HTTP server port", err)
+	}
+
+	return C.daemon_init_result_t{
+		port:  C.ushort(port),
+		error: nil,
+	}
+}
+
+func newInitError(msg string, cause error) C.daemon_init_result_t {
+	if cause != nil {
+		msg = fmt.Sprintf("%s: %+v", msg, cause)
+	}
+
+	return C.daemon_init_result_t{
+		port:  0,
+		error: C.CString(msg),
+	}
+}
+
+// DropDaemonInitResult cleans up any resources allocated for and owned by the passed
+// daemon_init_result_t value.
+//
+//export DropDaemonInitResult
+func DropDaemonInitResult(result *C.daemon_init_result_t) {
+	if result.error != nil {
+		C.free(unsafe.Pointer(result.error))
+		result.error = nil
+	}
+}
+
+func newError(msg string, cause error) C.result_t {
+	if cause != nil {
+		msg = fmt.Sprintf("%s: %+v", msg, cause)
+	}
+	return C.result_t{
+		error: C.CString(msg),
+	}
+}
+
+// DropResult cleans up any resources allocated for and owned by the result_t value.
+//
+//export DropResult
+func DropResult(result *C.result_t) {
+	if result.error != nil {
+		C.free(unsafe.Pointer(result.error))
+		result.error = nil
+	}
 }
 
 // Run the daemon (the HTTP request handler). You should call this function from a dedicated
@@ -119,21 +179,22 @@ func InitDaemon(cfg *C.daemon_config_t) uint16 {
 // **Important:** This function does not exit until you call StopDaemon from a different thread.
 //
 //export RunDaemon
-func RunDaemon() {
+func RunDaemon() C.result_t {
 	server := getDaemon()
 
 	if server == nil {
 		// The server may have been cleaned by now if StopDaemon was calling quickly enough
-		return
+		return OK
 	}
 
 	debug("RUNNING LASSIE HANDLER")
 	err := server.Start()
 	debug("LASSIE HANDLER EXITED:", err)
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("Lassie HTTP server error: %s", err))
+		return newError("Lassie HTTP server error", err)
 	}
+
+	return OK
 }
 
 func getDaemon() *httpserver.HttpServer {
@@ -148,41 +209,38 @@ func getDaemon() *httpserver.HttpServer {
 // CloseDaemon stops the Lassie HTTP daemon.
 //
 //export StopDaemon
-func StopDaemon() {
+func StopDaemon() C.result_t {
 	debug("StopDaemon locking the mutex")
 	mtx.Lock()
 	defer mtx.Unlock()
 	defer debug("StopDaemon lock released")
 
 	if daemon == nil {
-		// FIXME - handle errors
-		panic("Lassie daemon not running, cannot stop it")
+		return newError("Lassie daemon not running, cannot stop it", nil)
 	}
 
 	debug("STOPPING LASSIE HANDLER")
 	err := daemon.Close()
 	debug("STOP ERROR?", err)
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("Cannot stop Lassie HTTP server: %s", err))
+		return newError("Cannot stop Lassie HTTP server", err)
 	}
 
 	daemon = nil
+	return OK
 }
 
-func getPort() uint16 {
+func getPort() (uint16, error) {
 	_, portStr, err := net.SplitHostPort(daemon.Addr())
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("cannot parse server address `%s`: %s", daemon.Addr(), err))
+		return 0, fmt.Errorf("malformed server address `%s`: %+v", daemon.Addr(), err)
 	}
 	port, err := strconv.ParseUint(portStr, 10, 16)
 	if err != nil {
-		// FIXME - handle errors
-		panic(fmt.Sprintf("invalid port number `%s`: %s", portStr, err))
+		return 0, fmt.Errorf("invalid port number `%s`: %+v", portStr, err)
 	}
 
-	return uint16(port)
+	return uint16(port), nil
 }
 
 func debug(a ...any) {

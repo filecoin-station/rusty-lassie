@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::fmt::{Display, Formatter};
 use std::os::raw::c_char;
 use std::path::PathBuf;
@@ -6,9 +6,56 @@ use std::sync::{Mutex, MutexGuard};
 
 #[link(name = "golassie")]
 extern "C" {
-    fn InitDaemon(config: *const GoDaemonConfig) -> u16;
-    fn RunDaemon();
-    fn StopDaemon();
+    fn InitDaemon(config: *const GoDaemonConfig) -> InitDaemonResult;
+    fn DropDaemonInitResult(result: *mut InitDaemonResult);
+    fn RunDaemon() -> LassieResult;
+    fn StopDaemon() -> LassieResult;
+    fn DropResult(value: *mut LassieResult);
+}
+
+#[repr(C)]
+#[derive(Debug)]
+struct InitDaemonResult {
+    port: u16,
+    error: *const c_char,
+}
+
+impl Drop for InitDaemonResult {
+    fn drop(&mut self) {
+        unsafe { DropDaemonInitResult(self) }
+    }
+}
+
+impl InitDaemonResult {
+    fn error(&self) -> Option<String> {
+        from_c_string(self.error)
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+struct LassieResult {
+    error: *const c_char,
+}
+
+impl Drop for LassieResult {
+    fn drop(&mut self) {
+        unsafe { DropResult(self) }
+    }
+}
+
+impl LassieResult {
+    fn error(&self) -> Option<String> {
+        from_c_string(self.error)
+    }
+}
+
+fn from_c_string(str: *const c_char) -> Option<String> {
+    if str.is_null() {
+        return None;
+    }
+
+    Some(unsafe { CStr::from_ptr(str) }.to_string_lossy().to_string())
 }
 
 #[allow(dead_code)]
@@ -74,11 +121,25 @@ impl Daemon {
             port: config.port,
         };
 
-        let port = unsafe { InitDaemon(&go_config) };
+        let port = {
+            let result = unsafe { InitDaemon(&go_config) };
+            log::debug!("Lassie.InitDaemon result: {:?}", result);
+            if let Some(msg) = result.error() {
+                log::error!("Lassie.InitDaemon failed: {msg}");
+                return Err(StartError::Lassie(msg));
+            }
+            result.port
+        };
+        log::debug!("Lassie.InitDaemon returned port: {port}");
 
         let handler_thread = std::thread::spawn(move || {
             log::debug!("Running Lassie HTTP handler");
-            unsafe { RunDaemon() };
+            let result = unsafe { RunDaemon() };
+            if let Some(msg) = result.error() {
+                log::error!("Lassie HTTP handler failed: {msg}");
+                // TODO: should we somehow notify the main thread about the problem?
+                // Maybe we should panic? That would not kill the main thread though.
+            }
             log::debug!("HTTP handler exited");
         });
         maybe_daemon.replace(GoDaemon { handler_thread });
@@ -101,7 +162,10 @@ impl Drop for Daemon {
         }
 
         log::debug!("Shutting down Lassie Daemon");
-        unsafe { StopDaemon() };
+        let result = unsafe { StopDaemon() };
+        if let Some(msg) = result.error() {
+            panic!("Cannot stop Lassie Daemon: {msg}");
+        }
 
         log::debug!("Waiting for Lassie to exit");
         // It's safe to call unwrap() here because we already handled maybe_daemon.is_none() above
@@ -117,7 +181,7 @@ pub enum StartError {
     OnlyOneInstanceAllowed,
     PathContainsNullByte(String),
     PathIsNotValidUtf8(PathBuf),
-    // todo: Lassie errors
+    Lassie(String),
 }
 
 impl Display for StartError {
@@ -136,6 +200,7 @@ impl Display for StartError {
                 "path that are not valid UTF-8 are not supported (value: {:?})",
                 path.display(),
             )),
+            StartError::Lassie(msg) => f.write_str(msg),
         }
     }
 }
@@ -214,13 +279,35 @@ mod test {
             Daemon::start(DaemonConfig::default()).expect("cannot start the first instance");
         match Daemon::start(DaemonConfig::default()) {
             Ok(_) => panic!("starting another instance should have failed"),
+
             Err(err) => assert_eq!(err, StartError::OnlyOneInstanceAllowed),
+        };
+    }
+
+    #[test]
+    fn reports_listen_error() {
+        let _lock = setup_test_env();
+        let result = Daemon::start(DaemonConfig {
+            port: 1,
+            ..DaemonConfig::default()
+        });
+        match result {
+            Ok(_) => panic!("starting Lassie on port 1 should have failed"),
+            Err(StartError::Lassie(msg)) => {
+                assert!(
+                    msg.contains("cannot start the HTTP server")
+                        && msg.contains("listen tcp 127.0.0.1:1")
+                        && msg.contains("permission denied"),
+                    "Expected bind-socket permission error, actual: {msg}",
+                );
+            }
+            Err(err) => panic!("unexpected error while starting Lassie on port 1: {err}"),
         };
     }
 
     fn setup_test_env() -> MutexGuard<'static, ()> {
         let _ = env_logger::builder().is_test(true).try_init();
-        let lock = TEST_GUARD.lock().expect("cannot obtain global test lock");
+        let lock = TEST_GUARD.lock().expect("cannot obtain global test lock. This typically happens when one of the test fails; the problem should go away after you fix the test failure.");
         lock
     }
 }
