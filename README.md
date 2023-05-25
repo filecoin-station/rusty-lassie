@@ -1,6 +1,7 @@
 # rusty-lassie
 
-> A Rust wrapper for Lassie - a minimal universal retrieval client library for IPFS and Filecoin
+> A Rust wrapper for Lassie - a minimal universal retrieval client library for
+> IPFS and Filecoin
 
 Lassie repository: https://github.com/filecoin-project/lassie
 
