@@ -20,6 +20,10 @@
 	],
 
 	"runArgs": [
+		// It seems that Docker and/or DevContainers allow apps to listen on any port.
+		// Our test suite relies on port 1 being privileged (not allowed to listen on other users than root)
+		// and therefore fails with in the default DevContainer setup.
+		// Here we fix the problem by configuring ports 0-1023 as being privileged.
 		"--sysctl", "net.ipv4.ip_unprivileged_port_start=1024"
 	],
 
