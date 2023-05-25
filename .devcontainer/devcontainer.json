@@ -19,6 +19,10 @@
 		}
 	],
 
+	"runArgs": [
+		"--sysctl", "net.ipv4.ip_unprivileged_port_start=1024"
+	],
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
@@ -26,7 +30,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "rustc --version && go version",
+	"postCreateCommand": "rustc --version && go version"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
