@@ -12,6 +12,8 @@ fn main() {
         .current_dir("go-lib")
         .args([
             "build",
+            "-tags",
+            "netgo",
             "-o",
             &format!("{}/libgolassie.a", out_dir),
             "-buildmode=c-archive",
@@ -47,7 +49,8 @@ fn add_platform_specific_link_flags() {
     println!("cargo:rustc-link-arg=-framework");
     println!("cargo:rustc-link-arg=Security");
     // See https://github.com/golang/go/issues/58159
-    println!("cargo:rustc-link-lib=resolv");
+    // println!("cargo:rustc-link-lib=resolv");
+    // ^^ Replaced with `-tags netgo`
 }
 
 #[cfg(not(target_os = "macos"))]
