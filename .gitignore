@@ -43,3 +43,5 @@ go.work
 ########
 # Project-specific
 ########
+
+go-lib/_obj
