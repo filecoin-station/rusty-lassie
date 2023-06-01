@@ -55,16 +55,19 @@ var OK C.result_t = C.result_t{error: nil}
 //
 //export InitDaemon
 func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
-	debug_log := cfg.log_level <= 4
+	// We cannot set the global debug_log_variable here, because we need to obtain the lock first.
+	// We create a local variable with a different name instead.
+	wants_debug_log := cfg.log_level >= 4
 	// We cannot use debug() here because the global debug_log variable was not initialized yet
-	if debug_log {
+	if wants_debug_log {
 		print_debug("InitDaemon locking the mutex")
 	}
 
 	mtx.Lock()
 	defer mtx.Unlock()
-	debug_log_enabled = debug_log
 	defer debug("InitDaemon lock released")
+
+	debug_log_enabled = wants_debug_log
 
 	if daemon != nil {
 		return newInitError("cannot create more than one Lassie daemon", nil)
@@ -250,7 +253,7 @@ func debug(a ...any) {
 }
 
 func print_debug(a ...any) {
-	fmt.Fprintf(os.Stderr, "[LASSIE GO WRAPPER] ")
+	fmt.Fprint(os.Stderr, "[LASSIE GO WRAPPER] ")
 	fmt.Fprintln(os.Stderr, a...)
 }
 
