@@ -2,6 +2,8 @@ module github.com/filecoin-station/rusty-lassie/go-lib
 
 go 1.20
 
+require github.com/filecoin-project/lassie v0.11.1
+
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -28,7 +30,6 @@ require (
 	github.com/filecoin-project/go-state-types v0.10.0 // indirect
 	github.com/filecoin-project/go-statemachine v1.0.3 // indirect
 	github.com/filecoin-project/go-statestore v0.2.0 // indirect
-	github.com/filecoin-project/lassie v0.10.1-0.20230523060258-822b738e4375 // indirect
 	github.com/flynn/noise v1.0.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
