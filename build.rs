@@ -79,10 +79,7 @@ fn build_lassie() {
         .expect("cannot find the path to MSVC link.exe");
 
     let status = lib_cmd
-        .args([
-            format!("/def:{def_file}"),
-            format!("/out:{out_file}.lib"),
-        ])
+        .args([format!("/def:{def_file}"), format!("/out:{out_file}.lib")])
         .status()
         .unwrap();
     assert!(status.success(), "`link.exe` failed");
