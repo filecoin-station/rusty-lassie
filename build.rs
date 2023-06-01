@@ -1,5 +1,5 @@
+use std::env;
 use std::process::Command;
-use std::{env, fs};
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -79,7 +79,8 @@ fn build_lassie() {
     eprintln!("Building {out_file}.lib");
 
     let def_file = format!("{out_dir}\\golassie.def");
-    fs::copy("go-lib\\golassie.def", &def_file).expect("cannot copy golassie.def to OUTDIR");
+    std::fs::copy("go-lib\\golassie.def", &def_file)
+        .unwrap_or_else(|_| panic!("cannot copy golassie.def to {def_file}"));
     println!("cargo:rerun-if-changed=go-lib/golassie.def");
 
     // let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
@@ -110,5 +111,6 @@ fn build_lassie() {
     //   `target\x86_64-pc-windows-msvc\debug`, but also some custom dir configured via ENV vars
     // Related: https://github.com/rust-lang/cargo/issues/5305
     let dll_out = format!("{out_dir}\\..\\..\\..\\golassie.dll");
-    fs::copy(&out_file, &dll_out).expect(&format!("cannot copy {out_file} to {dll_out}"));
+    std::fs::copy(&out_file, &dll_out)
+        .unwrap_or_else(|_| panic!("cannot copy {out_file} to {dll_out}"));
 }
