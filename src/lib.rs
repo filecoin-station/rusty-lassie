@@ -248,8 +248,6 @@ mod test {
             println!("\t{hn}: {}", response.header(hn).unwrap_or("<empty>"));
         }
 
-        if response.status() != 200 {}
-
         assert_eq!(response.status(), 200);
         assert_eq!(
             response.header("Content-Type"),
