@@ -1,0 +1,17 @@
+; TODO: generate te EXPORTS section automatically in `build.rs`
+; for /f "skip=18 tokens=4" %A in ('dumpbin /exports target\debug\build\lassie-2517be8f1cc1738d\out\golassie.dll') do echo %A
+; Learn more here: https://stackoverflow.com/a/9946389/69868
+LIBRARY golassie
+EXPORTS
+DropDaemonInitResult
+DropResult
+InitDaemon
+RunDaemon
+StopDaemon
+_cgo_dummy_export
+DropDaemonInitResult 
+DropResult 
+InitDaemon 
+RunDaemon 
+StopDaemon 
+_cgo_dummy_export 

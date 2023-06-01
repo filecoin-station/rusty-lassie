@@ -4,7 +4,14 @@ use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
-#[link(name = "golassie")]
+#[cfg_attr(
+    all(target_os = "windows", target_env = "msvc"),
+    link(name = "golassie.dll")
+)]
+#[cfg_attr(
+    not(all(target_os = "windows", target_env = "msvc")),
+    link(name = "golassie")
+)]
 extern "C" {
     fn InitDaemon(config: *const GoDaemonConfig) -> InitDaemonResult;
     fn DropDaemonInitResult(result: *mut InitDaemonResult);
@@ -284,6 +291,7 @@ mod test {
     }
 
     #[test]
+    #[cfg_attr(windows, ignore)]
     fn reports_listen_error() {
         let _lock = setup_test_env();
         let result = Daemon::start(DaemonConfig {

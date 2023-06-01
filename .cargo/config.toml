@@ -1,0 +1,6 @@
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+  # Link the static version of the C runtime - this seems to be a common setup for Rust CLIs.
+  # Zinnia binaries use the static runtime and we want to support Zinnia.
+  "-C", "target-feature=+crt-static",
+]

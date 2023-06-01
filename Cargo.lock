@@ -183,6 +183,7 @@ dependencies = [
 name = "lassie"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "env_logger",
  "log",
  "pretty_assertions",
