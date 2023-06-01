@@ -66,6 +66,11 @@ response
 // content contains raw CAR data
 ```
 
+Learn more about Lassie in their documentation:
+
+- [HTTP API Specification](https://github.com/filecoin-project/lassie/blob/main/docs/HTTP_SPEC.md)
+- [Returned CAR Specification](https://github.com/filecoin-project/lassie/blob/main/docs/CAR.md)
+
 ## License
 
 This library is dual-licensed under Apache 2.0 and MIT terms.
