@@ -44,7 +44,9 @@ Notes:
 
 - You don't need to stop the daemon, it will be stopped when the last reference
   is dropped.
+
 - There can be only one daemon running per process, the library enforces this.
+
 - This code is synchronous and uses `Mutex` under the hood. Be mindful of the
   ramifications when starting the daemon from `async fn`!
 
@@ -70,6 +72,17 @@ Learn more about Lassie in their documentation:
 
 - [HTTP API Specification](https://github.com/filecoin-project/lassie/blob/main/docs/HTTP_SPEC.md)
 - [Returned CAR Specification](https://github.com/filecoin-project/lassie/blob/main/docs/CAR.md)
+
+## Windows specifics
+
+It's not possible to statically link a library produced by CGo to a Rust program
+compiled using MSVC toolchain. As a workaround, we are building the Go Lassie
+library as a DLL that must be distributed together with the application
+executable.
+
+Rusty-Lassie's build script copies the DLL into the target directory next to the
+main executable. All you need is to include this DLL in your distribution
+archive.
 
 ## License
 
