@@ -8,10 +8,3 @@ DropResult
 InitDaemon
 RunDaemon
 StopDaemon
-_cgo_dummy_export
-DropDaemonInitResult 
-DropResult 
-InitDaemon 
-RunDaemon 
-StopDaemon 
-_cgo_dummy_export 

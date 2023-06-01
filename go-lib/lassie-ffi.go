@@ -186,7 +186,7 @@ func RunDaemon() C.result_t {
 	server := getDaemon()
 
 	if server == nil {
-		// The server may have been cleaned by now if StopDaemon was calling quickly enough
+		// The server may have been cleaned by now if StopDaemon was called quickly after StartDaemon
 		return OK
 	}
 

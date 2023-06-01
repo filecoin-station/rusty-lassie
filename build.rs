@@ -82,7 +82,6 @@ fn build_lassie() {
         .args([
             format!("/def:{def_file}"),
             format!("/out:{out_file}.lib"),
-            // "/machine:X64".to_string(),
         ])
         .status()
         .unwrap();

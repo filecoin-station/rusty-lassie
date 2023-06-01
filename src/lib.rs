@@ -138,7 +138,7 @@ impl Daemon {
         let port = result.port;
         log::debug!("Lassie.InitDaemon returned port: {port}");
 
-        let handler_thread = std::thread::spawn(move || {
+        let handler_thread = std::thread::spawn(|| {
             log::debug!("Running Lassie HTTP handler");
             let result = unsafe { RunDaemon() };
             if let Some(msg) = result.error() {
@@ -148,7 +148,7 @@ impl Daemon {
             }
             log::debug!("HTTP handler exited");
         });
-        maybe_daemon.replace(GoDaemon { handler_thread });
+        *maybe_daemon = Some(GoDaemon { handler_thread });
 
         log::info!("Lassie Daemon is listening on port {}", port);
         Ok(Daemon { port })
