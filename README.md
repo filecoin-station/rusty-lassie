@@ -42,8 +42,7 @@ pub fn main() {
 
 Notes:
 
-- You don't need to stop the daemon, it will be stopped when the last reference
-  is dropped.
+- You don't need to stop the daemon, it will be stopped when it's dropped.
 
 - There can be only one daemon running per process, the library enforces this.
 
