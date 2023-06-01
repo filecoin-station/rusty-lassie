@@ -31,26 +31,18 @@ fn build_lassie() {
     assert!(status.success(), "`go build` failed");
 
     println!("cargo:rustc-link-search=native={}", out_dir);
-    // println!("cargo:rustc-link-lib=static={}", "golassie");
 
-    add_platform_specific_link_flags();
-}
-
-#[cfg(target_os = "macos")]
-fn add_platform_specific_link_flags() {
-    // See https://github.com/golang/go/issues/11258
-    println!("cargo:rustc-link-arg=-framework");
-    println!("cargo:rustc-link-arg=CoreFoundation");
-    println!("cargo:rustc-link-arg=-framework");
-    println!("cargo:rustc-link-arg=Security");
-    // See https://github.com/golang/go/issues/58159
-    // println!("cargo:rustc-link-lib=resolv");
-    // ^^ Replaced with `-tags netgo`
-}
-
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn add_platform_specific_link_flags() {
-    // no-op
+    #[cfg(target_os = "macos")]
+    {
+        // See https://github.com/golang/go/issues/11258
+        println!("cargo:rustc-link-arg=-framework");
+        println!("cargo:rustc-link-arg=CoreFoundation");
+        println!("cargo:rustc-link-arg=-framework");
+        println!("cargo:rustc-link-arg=Security");
+        // See https://github.com/golang/go/issues/58159
+        // println!("cargo:rustc-link-lib=resolv");
+        // ^^ Replaced with `-tags netgo`
+    }
 }
 
 #[cfg(all(target_os = "windows", target_env = "msvc"))]
@@ -83,12 +75,6 @@ fn build_lassie() {
         .unwrap_or_else(|_| panic!("cannot copy golassie.def to {def_file}"));
     println!("cargo:rerun-if-changed=go-lib/golassie.def");
 
-    // let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    // assert_eq!(
-    //     target_arch, "x86_64",
-    //     "Unsupported Windows architecture: {target_arch}"
-    // );
-
     let mut lib_cmd = cc::windows_registry::find(&env::var("TARGET").unwrap(), "lib.exe")
         .expect("cannot find the path to MSVC link.exe");
 
@@ -103,7 +89,6 @@ fn build_lassie() {
     assert!(status.success(), "`link.exe` failed");
 
     println!("cargo:rustc-link-search=native={}", out_dir);
-    // println!("cargo:rustc-link-lib={}", "golassie.dll");
 
     // UGLY HACK:
     // - Rust/Cargo does not support resource files, we must copy the DLL manually
