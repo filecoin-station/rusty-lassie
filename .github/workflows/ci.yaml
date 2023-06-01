@@ -55,22 +55,6 @@ jobs:
       - name: Run all tests
         run: cargo test --all-features --target=${{ matrix.target }}
 
-      # - name: Check if we compile without any features activated
-      #   run: cargo build --package ${{ matrix.crate }} --no-default-features
-      #
-      # - name: Check if crate has been released
-      #   id: check-released
-      #   run: |
-      #     RESPONSE_CODE=$(curl https://crates.io/api/v1/crates/${{ matrix.crate }} --silent --write-out "%{http_code}" --output /dev/null)
-      #     echo "code=${RESPONSE_CODE}"
-      #     echo "code=${RESPONSE_CODE}" >> $GITHUB_OUTPUT
-      #
-      # - name: Check public API for semver violations
-      #   if: steps.check-released.outputs.code == 200 # Workaround until https://github.com/obi1kenobi/cargo-semver-check/issues/146 is shipped.
-      #   run: |
-      #     wget -q -O- https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v0.17.1/cargo-semver-checks-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C ~/.cargo/bin
-      #     cargo semver-checks check-release -p ${{ matrix.crate }}
-
   lint:
     name: Run Rust linters
     runs-on: ubuntu-latest

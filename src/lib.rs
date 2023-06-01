@@ -65,7 +65,6 @@ fn from_c_string(str: *const c_char) -> Option<String> {
     Some(unsafe { CStr::from_ptr(str) }.to_string_lossy().to_string())
 }
 
-#[allow(dead_code)]
 #[repr(C)]
 struct GoDaemonConfig {
     // this must be kept in sync with the definition of daemon_config_t in go-lib/lassie-ffi.go
