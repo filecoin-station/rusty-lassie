@@ -4,3 +4,26 @@ rustflags = [
   # Zinnia binaries use the static runtime and we want to support Zinnia.
   "-C", "target-feature=+crt-static",
 ]
+
+# Temporary solution to have clippy config in a single place until
+# Cargo and/or Clippy supports lint config file.
+# See https://github.com/rust-lang/rust-clippy/blob/8a9860901f0ae9782ff23fb793838a16f733a60b/book/src/development/proposals/roadmap-2021.md#lintstoml-configuration
+[alias]
+custom-clippy = [
+  "clippy",
+  "--all-features",
+  "--all-targets",
+  "--",
+  "-D",
+  "clippy::all",
+  "-D",
+  "clippy::await_holding_refcell_ref",
+  "-D",
+  "clippy::missing_safety_doc",
+  "-D",
+  "clippy::undocumented_unsafe_blocks",
+  "-D",
+  "clippy::pedantic",
+  "-D",
+  "warnings"
+]

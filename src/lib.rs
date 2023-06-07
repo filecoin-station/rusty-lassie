@@ -32,6 +32,11 @@ struct InitDaemonResult {
 
 impl Drop for InitDaemonResult {
     fn drop(&mut self) {
+        // SAFETY:
+        // We can safely call the FFI function to free the memory used by InitDaemonResult, because
+        // Rust guarantees that the `drop` function is called only once for each InitDaemonResult
+        // instance. Also InitDaemonResult is a private struct that's visible only inside this file,
+        // and we are never instantiate it directly, we always obtain instances via FFI calls.
         unsafe { DropDaemonInitResult(self) }
     }
 }
@@ -50,6 +55,11 @@ struct LassieResult {
 
 impl Drop for LassieResult {
     fn drop(&mut self) {
+        // SAFETY:
+        // We can safely call the FFI function to free the memory used by LassieResult, because Rust
+        // guarantees that the `drop` function is called only once for each LassieResult instance.
+        // Also LassieResult is a private struct that's visible only inside this file, and we are
+        // never instantiate it directly, we always obtain instances via FFI calls.
         unsafe { DropResult(self) }
     }
 }
@@ -65,6 +75,8 @@ fn from_c_string(str: *const c_char) -> Option<String> {
         return None;
     }
 
+    // SAFETY:
+    // We already checked that str is not NULL, see above.
     Some(unsafe { CStr::from_ptr(str) }.to_string_lossy().to_string())
 }
 
@@ -82,6 +94,8 @@ struct GoDaemon {
 
 static mut DAEMON: Mutex<Option<GoDaemon>> = Mutex::new(None);
 fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDaemon>>> {
+    // SAFETY:
+    // We are accessing the global variable from this place only and it's protected by a Mutex.
     unsafe { DAEMON.lock() }
 }
 
@@ -96,6 +110,10 @@ pub struct Daemon {
 }
 
 impl Daemon {
+    /// # Errors
+    ///
+    /// This function returns `Err` when you are trying to start more than instance, the configured
+    /// `temp_dir` path cannot be converted to a Go string, or Lassie cannot start the HTTP server.
     pub fn start(config: DaemonConfig) -> Result<Self, StartError> {
         log::debug!("[Daemon::start] Locking global daemon mutex");
         let mut maybe_daemon = get_global_daemon().map_err(|_| StartError::MutexPoisoned)?;
@@ -106,7 +124,7 @@ impl Daemon {
 
         log::info!("Starting Lassie Daemon");
         let temp_dir = match config.temp_dir {
-            None => "".to_string(),
+            None => String::new(),
             Some(dir) => {
                 let str = dir.to_str();
                 match str {
@@ -130,6 +148,9 @@ impl Daemon {
             port: config.port,
         };
 
+        // SAFETY:
+        // It's safe to call this FFI function as it does not have any special safety requirements
+        // and we know that `&go_config` is not a NULL pointer.
         let result = unsafe { InitDaemon(&go_config) };
         log::debug!("Lassie.InitDaemon result: {:?}", result);
 
@@ -142,6 +163,8 @@ impl Daemon {
 
         let handler_thread = std::thread::spawn(|| {
             log::debug!("Running Lassie HTTP handler");
+            // SAFETY:
+            // This FFI function is designed to be called from a different thread.
             let result = unsafe { RunDaemon() };
             if let Some(msg) = result.error() {
                 log::error!("Lassie HTTP handler failed: {msg}");
@@ -156,6 +179,7 @@ impl Daemon {
         Ok(Daemon { port })
     }
 
+    #[must_use]
     pub fn port(&self) -> u16 {
         self.port
     }
@@ -165,11 +189,14 @@ impl Drop for Daemon {
     fn drop(&mut self) {
         log::debug!("[Daemon::drop] Locking global daemon mutex");
         let mut maybe_daemon = get_global_daemon().expect("global daemon mutex was poisoned");
-        if maybe_daemon.is_none() {
-            panic!("Daemon.drop() was called when no GoDaemon was running");
-        }
+        assert!(
+            !maybe_daemon.is_none(),
+            "Daemon.drop() was called when no GoDaemon was running"
+        );
 
         log::debug!("Shutting down Lassie Daemon");
+        // SAFETY:
+        // We can call this FFI function as it does not have any special safety requirements.
         let result = unsafe { StopDaemon() };
         if let Some(msg) = result.error() {
             panic!("Cannot stop Lassie Daemon: {msg}");
