@@ -11,6 +11,10 @@ updates:
       prefix-development: "deps(dev)"
     reviewers:
       - "bajtos"
+    ignore:
+      # Keep the `log` crate at version ^0.17.0 to stay compatible with
+      # Deno crates that are pinning `log` version exactly to `0.17.0`
+      - dependency-name: "log"
 
   - package-ecosystem: "gomod"
     directory: "/go-lib"
