@@ -27,7 +27,7 @@ documentation will refer to `X.Y.Z` as _major_, _minor_ and _patch_ version.
    types: `patch`, `minor` or `major`.
 
 1. Open the GitHub Releases page:
-   https://github.com/filecoin-station/zinnia/releases and draft a new release.
+   https://github.com/filecoin-station/rusty-lassie/releases and draft a new release.
    Use the git tag created in the previous step.
 
 1. Click on the button `Generate release notes`. Review the list of commits and
