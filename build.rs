@@ -31,7 +31,7 @@ fn build_lassie() {
         .unwrap();
     assert!(status.success(), "`go build` failed");
 
-    println!("cargo:rustc-link-search=native={}", out_dir);
+    println!("cargo:rustc-link-search=native={out_dir}");
 
     #[cfg(target_os = "macos")]
     {
@@ -85,7 +85,7 @@ fn build_lassie() {
         .unwrap();
     assert!(status.success(), "`link.exe` failed");
 
-    println!("cargo:rustc-link-search=native={}", out_dir);
+    println!("cargo:rustc-link-search=native={out_dir}");
 
     // UGLY HACK:
     // - Rust/Cargo does not support resource files, we must copy the DLL manually
