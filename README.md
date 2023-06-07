@@ -1,4 +1,9 @@
-# rusty-lassie
+<p align="center">
+  <img src="./docs/images/logo-rectangle.png" width="50%"/>
+</p>
+<h1 align="center">
+rusty-lassie
+</h1>
 
 > A Rust wrapper for Lassie - a minimal universal retrieval client library for
 > IPFS and Filecoin
