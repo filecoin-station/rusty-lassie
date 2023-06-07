@@ -1,8 +1,11 @@
 use std::ffi::{CStr, CString};
-use std::fmt::{Display, Formatter};
 use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
+
+mod start_error;
+
+pub use start_error::StartError;
 
 #[cfg_attr(
     all(target_os = "windows", target_env = "msvc"),
@@ -176,37 +179,6 @@ impl Drop for Daemon {
         // It's safe to call unwrap() here because we already handled maybe_daemon.is_none() above
         let GoDaemon { handler_thread } = maybe_daemon.take().unwrap();
         handler_thread.join().expect("Lassie handler panicked");
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-#[non_exhaustive]
-pub enum StartError {
-    MutexPoisoned,
-    OnlyOneInstanceAllowed,
-    PathContainsNullByte(String),
-    PathIsNotValidUtf8(PathBuf),
-    Lassie(String),
-}
-
-impl Display for StartError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "failed to start Lassie daemon: ")?;
-        match self {
-            StartError::MutexPoisoned => f.write_str("the global mutex was poisoned"),
-            StartError::OnlyOneInstanceAllowed => {
-                f.write_str("cannot create more than one instance")
-            }
-            StartError::PathContainsNullByte(path_str) => f.write_fmt(format_args!(
-                "null bytes are not allowed in paths (value: {:?})",
-                path_str
-            )),
-            StartError::PathIsNotValidUtf8(path) => f.write_fmt(format_args!(
-                "path that are not valid UTF-8 are not supported (value: {:?})",
-                path.display(),
-            )),
-            StartError::Lassie(msg) => f.write_str(msg),
-        }
     }
 }
 
