@@ -34,6 +34,7 @@ jobs:
         uses: dtolnay/rust-toolchain@52e69531e6f69a396bc9d1226284493a5db969ff # v1
         with:
           toolchain: stable
+          components: clippy
           target: ${{ matrix.target }}
 
       - name: Set up Go
@@ -56,6 +57,9 @@ jobs:
       - name: Run all tests
         run: cargo test --all-features --target=${{ matrix.target }}
 
+      - name: Run Clippy linter
+        run: cargo custom-clippy # cargo alias to allow reuse of config locally
+
   lint:
     name: Run Rust linters
     runs-on: ubuntu-latest
@@ -66,7 +70,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@52e69531e6f69a396bc9d1226284493a5db969ff # v1
         with:
           toolchain: stable
-          components: clippy,rustfmt
+          components: rustfmt
 
       - uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
         with:
@@ -75,9 +79,6 @@ jobs:
 
       - name: Check Rust formatting
         run: cargo fmt -- --check
-
-      - name: Run cargo clippy
-        run: cargo clippy # cargo alias to allow reuse of config locally
 
       - name: Check rustdoc links
         run: RUSTDOCFLAGS="--deny rustdoc::broken_intra_doc_links --deny warnings" cargo doc --verbose --workspace --no-deps --all-features --document-private-items
