@@ -190,7 +190,7 @@ impl Drop for Daemon {
         log::debug!("[Daemon::drop] Locking global daemon mutex");
         let mut maybe_daemon = get_global_daemon().expect("global daemon mutex was poisoned");
         assert!(
-            !maybe_daemon.is_none(),
+            maybe_daemon.is_some(),
             "Daemon.drop() was called when no GoDaemon was running"
         );
 
