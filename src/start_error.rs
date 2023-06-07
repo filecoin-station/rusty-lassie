@@ -20,11 +20,10 @@ impl Display for StartError {
                 f.write_str("cannot create more than one instance")
             }
             StartError::PathContainsNullByte(path_str) => f.write_fmt(format_args!(
-                "null bytes are not allowed in paths (value: {:?})",
-                path_str
+                "null bytes are not allowed in paths (value: {path_str:?})",
             )),
             StartError::PathIsNotValidUtf8(path) => f.write_fmt(format_args!(
-                "path that are not valid UTF-8 are not supported (value: {:?})",
+                "paths that are not valid UTF-8 are not supported (value: {:?})",
                 path.display(),
             )),
             StartError::Lassie(msg) => f.write_str(msg),
