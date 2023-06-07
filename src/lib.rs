@@ -87,8 +87,8 @@ fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDae
 
 #[derive(Debug, Clone, Default)]
 pub struct DaemonConfig {
-    temp_dir: Option<PathBuf>,
-    port: u16,
+    pub temp_dir: Option<PathBuf>,
+    pub port: u16,
 }
 
 pub struct Daemon {
