@@ -2,7 +2,7 @@ module github.com/filecoin-station/rusty-lassie/go-lib
 
 go 1.20
 
-require github.com/filecoin-project/lassie v0.11.1
+require github.com/filecoin-project/lassie v0.12.0
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
