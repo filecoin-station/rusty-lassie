@@ -8,6 +8,10 @@ repository = "https://github.com/filecoin-station/rusty-lassie"
 authors = [
     "Miroslav Bajtoš <oss@bajtos.net>"
 ]
+exclude = [
+    "docs/images/logo-square.png",
+    "docs/images/logo-rectangle.jpg",
+]
 
 build = "build.rs"
 
