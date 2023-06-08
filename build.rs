@@ -14,7 +14,14 @@ fn build_lassie() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let out_file = &format!("{out_dir}/libgolassie.a");
 
-    eprintln!("Building {out_file}");
+    let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let goarch = match arch.as_str() {
+        "x86_64" => "amd64",
+        "aarch64" => "arm64",
+        _ => panic!("Unsupported architecture: {arch}"),
+    };
+
+    eprintln!("Building {out_file} for {arch} (GOARCH={goarch})");
 
     let status = Command::new("go")
         .current_dir("go-lib")
@@ -27,6 +34,10 @@ fn build_lassie() {
             "-buildmode=c-archive",
             "lassie-ffi.go",
         ])
+        .env("GOARCH", goarch)
+        // We must explicitly enable CGO when cross-compiling
+        // See e.g. https://stackoverflow.com/q/74976549/69868
+        .env("CGO_ENABLED", "1")
         .status()
         .unwrap();
     assert!(status.success(), "`go build` failed");
