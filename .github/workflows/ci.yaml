@@ -22,6 +22,9 @@ jobs:
         include:
           - target: x86_64-apple-darwin
             os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            skip-tests: true
           - target: x86_64-pc-windows-msvc
             os: windows-latest
           - target: x86_64-unknown-linux-gnu
@@ -50,11 +53,15 @@ jobs:
           # commits added to an already-opened pull request.
           # save-if: ${{ github.ref == 'refs/heads/main' }}
 
-
       - name: Build the library
         run: cargo build --lib --all-features --target=${{ matrix.target }}
 
+      - name: Build the tests to check linking
+        if: matrix.skip-tests == true
+        run: cargo build --tests --all-features --target=${{ matrix.target }}
+
       - name: Run all tests
+        if: matrix.skip-tests != true
         run: cargo test --all-features --target=${{ matrix.target }}
 
       - name: Run Clippy linter
