@@ -218,8 +218,6 @@ mod test {
     // we must synchronise the tests to ensure they run sequentially
     static TEST_GUARD: Mutex<()> = Mutex::new(());
 
- 
-
     #[test]
     fn can_start_after_stopping() {
         let _lock = setup_test_env();
