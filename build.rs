@@ -39,7 +39,7 @@ fn build_lassie() {
         // See e.g. https://stackoverflow.com/q/74976549/69868
         .env("CGO_ENABLED", "1")
         .status()
-        .unwrap();
+        .expect("Cannot execute `go`, make sure it's installed.\nLearn more at https://go.dev/doc/install");
     assert!(status.success(), "`go build` failed");
 
     println!("cargo:rustc-link-search=native={out_dir}");
@@ -77,7 +77,11 @@ fn build_lassie() {
             "lassie-ffi.go",
         ])
         .status()
-        .unwrap();
+        .expect(
+            "Cannot execute `go`, make sure it's installed.\n\
+                 Learn more at https://go.dev/doc/install.\n\
+                 On Windows, you need GCC installed too: https://jmeubank.github.io/tdm-gcc/",
+        );
     assert!(status.success(), "`go build` failed");
 
     eprintln!("Building {out_file}.lib");
@@ -93,7 +97,7 @@ fn build_lassie() {
     let status = lib_cmd
         .args([format!("/def:{def_file}"), format!("/out:{out_file}.lib")])
         .status()
-        .unwrap();
+        .expect("cannot execute 'link.exe'");
     assert!(status.success(), "`link.exe` failed");
 
     println!("cargo:rustc-link-search=native={out_dir}");
