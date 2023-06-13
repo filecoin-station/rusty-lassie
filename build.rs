@@ -48,6 +48,14 @@ fn build_lassie() {
 
         cmd.env("GOCACHE", format!("{target_dir}/go/cache"))
             .env("GOMODCACHE", format!("{target_dir}/go/pkg-mod-cache"));
+
+        if arch == "aarch64" {
+            // Overwrite Go CC config, unless it's already provided by the user
+            // See https://github.com/golang/go/issues/28966
+            if env::var("CC").is_err() {
+                cmd.env("CC", "aarch64-linux-gnu-gcc");
+            }
+        }
     }
 
     let status = cmd.status().expect(

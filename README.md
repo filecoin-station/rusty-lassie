@@ -94,23 +94,7 @@ If you are building your project using
 [Cross](https://github.com/cross-rs/cross), you need to install Go in the Docker
 images used by Cross.
 
-For example, you can add a `Cross.toml` file with the following content to your
-project root:
-
-```toml
-[target.x86_64-unknown-linux-gnu]
-pre-build = [
-  "rm -rf /usr/local/go && curl -L https://go.dev/dl/go1.20.5.linux-amd64.tar.gz | tar -xz -C /usr/local && ln -s /usr/local/go/bin/go /usr/local/bin/ && go version"
-]
-
-[target.aarch64-unknown-linux-gnu]
-pre-build = [
-  "rm -rf /usr/local/go && curl -L https://go.dev/dl/go1.20.5.linux-amd64.tar.gz | tar -xz -C /usr/local && ln -s /usr/local/go/bin/go /usr/local/bin/ && go version"
-]
-```
-
-Cross is always running the container on `amd64`, therefore you must download
-`amd64` version of Go when targeting `aarch64`.
+Check out our own [Cross.toml](./Cross.toml) for inspiration.
 
 Learn more in Cross and Go documentation:
 

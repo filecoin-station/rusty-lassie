@@ -140,7 +140,9 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
+            test: true
           - target: aarch64-unknown-linux-gnu
+            test: false
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -165,4 +167,10 @@ jobs:
           cache-on-failure: true
 
       - name: Build
-        run: cross build --all --locked --target ${{ matrix.target }}
+        run: cross build --all-targets --target ${{ matrix.target }}
+
+      - name: Test
+        if: matrix.test == 'true'
+        run: cross test --target ${{ matrix.target }}
+
+
