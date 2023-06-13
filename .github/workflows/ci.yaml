@@ -133,7 +133,7 @@ jobs:
           fi
 
   cross-compile:
-    name: Cross-compile fof ${{ matrix.target }}
+    name: Cross-compile for ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
