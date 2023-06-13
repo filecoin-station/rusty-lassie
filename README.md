@@ -94,12 +94,13 @@ If you are building your project using
 [Cross](https://github.com/cross-rs/cross), you need to install Go in the Docker
 images used by Cross.
 
-Check out our own [Cross.toml](./Cross.toml) for inspiration.
+Check out our own [Cross.toml](./Cross.toml) and
+[cross/Dockerfile](./cross/Dockerfile) for inspiration.
 
 Learn more in Cross and Go documentation:
 
 - [Configuring cross via a Cross.toml file](https://github.com/cross-rs/cross#option-2-configuring-cross-via-a-crosstoml-file)
-- [Pre-build hook](https://github.com/cross-rs/cross#pre-build-hook)
+- [Dockerfiles](https://github.com/cross-rs/cross#dockerfiles)
 - [Download and install Go](https://go.dev/doc/install)
 
 ## License
