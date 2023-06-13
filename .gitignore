@@ -45,3 +45,4 @@ go.work
 ########
 
 go-lib/_obj
+target/go

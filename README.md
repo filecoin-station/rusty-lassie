@@ -88,6 +88,33 @@ Rusty-Lassie's build script copies the DLL into the target directory next to the
 main executable. All you need is to include this DLL in your distribution
 archive.
 
+## Cross-compilation
+
+If you are building your project using
+[Cross](https://github.com/cross-rs/cross), you need to install Go in the Docker
+images used by Cross.
+
+For example, you can add a `Cross.toml` file with the following content to your
+project root (replace the Go version as needed):
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+pre-build = [
+  "rm -rf /usr/local/go && curl -L https://go.dev/dl/go1.20.5.linux-amd64.tar.gz | tar -xz -C /usr/local && ln -s /usr/local/go/bin/go /usr/local/bin/ && go version"
+]
+
+[target.aarch64-unknown-linux-gnu]
+pre-build = [
+  "rm -rf /usr/local/go && curl -L https://go.dev/dl/go1.20.5.linux-arm64.tar.gz | tar -xz -C /usr/local && ln -s /usr/local/go/bin/go /usr/local/bin/ && go version"
+]
+```
+
+Learn more in Cross and Go documentation:
+
+- [Configuring cross via a Cross.toml file](https://github.com/cross-rs/cross#option-2-configuring-cross-via-a-crosstoml-file)
+- [Pre-build hook](https://github.com/cross-rs/cross#pre-build-hook)
+- [Download and install Go](https://go.dev/doc/install)
+
 ## License
 
 This library is dual-licensed under Apache 2.0 and MIT terms.

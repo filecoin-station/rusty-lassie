@@ -131,3 +131,38 @@ jobs:
             echo "PR title is too long (greater than 72 characters)"
             exit 1
           fi
+
+  cross-compile:
+    name: Cross-compile fof ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@52e69531e6f69a396bc9d1226284493a5db969ff # v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Setup Cross
+        run: |
+          curl -L https://github.com/cross-rs/cross/releases/latest/download/cross-x86_64-unknown-linux-gnu.tar.gz -o /tmp/cross.tgz
+          tar xzf /tmp/cross.tgz -C ~/.cargo/bin
+          cross --version
+
+      - name: Cache Rust deps
+        uses: Swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894 # v2.4.0
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        with:
+          shared-key: cross-${{ matrix.target }}
+          cache-on-failure: true
+
+      - name: Build
+        run: cross build --all --locked --target ${{ matrix.target }}
