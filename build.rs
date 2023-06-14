@@ -23,8 +23,8 @@ fn build_lassie() {
 
     eprintln!("Building {out_file} for {arch} (GOARCH={goarch})");
 
-    let status = Command::new("go")
-        .current_dir("go-lib")
+    let mut cmd = Command::new("go");
+    cmd.current_dir("go-lib")
         .args([
             "build",
             "-tags",
@@ -37,9 +37,30 @@ fn build_lassie() {
         .env("GOARCH", goarch)
         // We must explicitly enable CGO when cross-compiling
         // See e.g. https://stackoverflow.com/q/74976549/69868
-        .env("CGO_ENABLED", "1")
-        .status()
-        .expect("Cannot execute `go`, make sure it's installed.\nLearn more at https://go.dev/doc/install");
+        .env("CGO_ENABLED", "1");
+
+    if env::var("HOME") == Ok("/".to_string()) && env::var("CROSS_RUNNER").is_ok() {
+        // When cross-compiling using `cross build`, HOME is set to `/` and go is trying to
+        // create its cache dir in /.cache/go-build, which is not writable.
+        // We fix the problem by explicitly setting the GOCACHE and GOMODCACHE env vars
+        let target_dir = env::var("CARGO_TARGET_DIR")
+            .expect("cannot obtain CARGO_TARGET_DIR from the environment");
+
+        cmd.env("GOCACHE", format!("{target_dir}/go/cache"))
+            .env("GOMODCACHE", format!("{target_dir}/go/pkg-mod-cache"));
+
+        if arch == "aarch64" {
+            // Overwrite Go CC config, unless it's already provided by the user
+            // See https://github.com/golang/go/issues/28966
+            if env::var("CC").is_err() {
+                cmd.env("CC", "aarch64-linux-gnu-gcc");
+            }
+        }
+    }
+
+    let status = cmd.status().expect(
+        "Cannot execute `go`, make sure it's installed.\nLearn more at https://go.dev/doc/install",
+    );
     assert!(status.success(), "`go build` failed");
 
     println!("cargo:rustc-link-search=native={out_dir}");

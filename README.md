@@ -88,6 +88,21 @@ Rusty-Lassie's build script copies the DLL into the target directory next to the
 main executable. All you need is to include this DLL in your distribution
 archive.
 
+## Cross-compilation
+
+If you are building your project using
+[Cross](https://github.com/cross-rs/cross), you need to install Go in the Docker
+images used by Cross.
+
+Check out our own [Cross.toml](./Cross.toml) and
+[cross/Dockerfile](./cross/Dockerfile) for inspiration.
+
+Learn more in Cross and Go documentation:
+
+- [Configuring cross via a Cross.toml file](https://github.com/cross-rs/cross#option-2-configuring-cross-via-a-crosstoml-file)
+- [Dockerfiles](https://github.com/cross-rs/cross#dockerfiles)
+- [Download and install Go](https://go.dev/doc/install)
+
 ## License
 
 This library is dual-licensed under Apache 2.0 and MIT terms.
