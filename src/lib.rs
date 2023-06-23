@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
+use std::time::Duration;
 
 mod start_error;
 
@@ -86,6 +87,9 @@ struct GoDaemonConfig {
     temp_dir: *const c_char,
     port: u16,
     log_level: usize,
+    max_blocks: u64,
+    provider_timeout: i64,
+    global_timeout: i64,
 }
 
 struct GoDaemon {
@@ -99,10 +103,36 @@ fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDae
     unsafe { DAEMON.lock() }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct DaemonConfig {
     pub temp_dir: Option<PathBuf>,
     pub port: u16,
+
+    /// MaxBlocks optionally specifies the maximum number of blocks to fetch.
+    pub max_blocks: Option<u64>,
+
+    /// Specify a custom timeout for retrieving data from a provider. Beyond this limit, when no
+    /// data has been received, the retrieval will fail.
+    ///
+    /// The default value is 20 seconds.
+    pub provider_timeout: Option<Duration>,
+
+    /// Specify a custom timeout for the entire retrieval process.
+    ///
+    /// The default value is 20 seconds.
+    pub global_timeout: Option<Duration>,
+}
+
+impl Default for DaemonConfig {
+    fn default() -> Self {
+        Self {
+            temp_dir: Default::default(),
+            port: Default::default(),
+            max_blocks: Default::default(),
+            provider_timeout: Some(Duration::from_secs(20)),
+            global_timeout: Some(Duration::from_secs(20)),
+        }
+    }
 }
 
 pub struct Daemon {
@@ -142,10 +172,24 @@ impl Daemon {
         } else {
             log::LevelFilter::Off
         };
+
+        let global_timeout = match config.global_timeout {
+            Some(d) => try_convert_duration_to_go_type(d)?,
+            None => 0,
+        };
+
+        let provider_timeout = match config.provider_timeout {
+            Some(d) => try_convert_duration_to_go_type(d)?,
+            None => 0,
+        };
+
         let go_config = GoDaemonConfig {
             temp_dir: temp_dir.as_ptr(),
             log_level: log_level as usize,
             port: config.port,
+            global_timeout,
+            provider_timeout,
+            max_blocks: config.max_blocks.unwrap_or(0),
         };
 
         // SAFETY:
@@ -207,6 +251,11 @@ impl Drop for Daemon {
         let GoDaemon { handler_thread } = maybe_daemon.take().unwrap();
         handler_thread.join().expect("Lassie handler panicked");
     }
+}
+
+fn try_convert_duration_to_go_type(from: Duration) -> Result<i64, StartError> {
+    // Go Duration type represents the elapsed time between two instants as an int64 nanosecond count.
+    i64::try_from(from.as_nanos()).map_err(|_| StartError::DurationIsTooLong(from))
 }
 
 #[cfg(test)]

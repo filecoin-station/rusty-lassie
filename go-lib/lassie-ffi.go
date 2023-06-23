@@ -15,6 +15,9 @@ typedef struct {
 	const char* temp_dir;
 	uint16_t port;
 	size_t log_level;
+	uint64_t max_blocks;
+	int64_t provider_timeout;
+	int64_t global_timeout;
 } daemon_config_t;
 
 typedef struct {
@@ -82,8 +85,10 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 		debug(fmt.Sprintf("Lassie configuration:\n  log_level=%d\n  port=%d\n  temp_dir=`%v`", cfg.log_level, cfg.port, tempDirStr))
 	}
 
-	lassieOpts := []lassie.LassieOption{lassie.WithProviderTimeout(20 * time.Second)}
-	lassieOpts = append(lassieOpts, lassie.WithGlobalTimeout(20*time.Second))
+	lassieOpts := []lassie.LassieOption{
+		lassie.WithProviderTimeout(time.Duration(cfg.provider_timeout)),
+		lassie.WithGlobalTimeout(time.Duration(cfg.global_timeout)),
+	}
 
 	// TODO: configure Libp2p connection manager (LowWater, HighWater)
 	// TODO: configure max concurrent SP retrievals
@@ -108,12 +113,10 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 	}
 
 	daemon, err = httpserver.NewHttpServer(ctx, lassie, httpserver.HttpServerConfig{
-		Address: "127.0.0.1",
-		Port:    uint(cfg.port),
-		TempDir: tempDir,
-		// No limit.
-		// TODO: I think we should expose this as a config option
-		MaxBlocksPerRequest: 0,
+		Address:             "127.0.0.1",
+		Port:                uint(cfg.port),
+		TempDir:             tempDir,
+		MaxBlocksPerRequest: uint64(cfg.max_blocks),
 	})
 
 	if err != nil {
