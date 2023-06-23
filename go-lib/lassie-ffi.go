@@ -100,10 +100,6 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 	// TODO: configure bitswap concurrency
 	// lassieOpts = append(lassieOpts, lassie.WithBitswapConcurrency(bitswapConcurrency))
 
-	if tempDir != "" {
-		lassieOpts = append(lassieOpts, lassie.WithTempDir(tempDir))
-	}
-
 	ctx := context.Background()
 
 	lassie, err := lassie.NewLassie(ctx, lassieOpts...)

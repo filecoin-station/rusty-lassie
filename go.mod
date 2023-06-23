@@ -2,7 +2,7 @@ module github.com/filecoin-station/rusty-lassie
 
 go 1.20
 
-require github.com/filecoin-project/lassie v0.12.2
+require github.com/filecoin-project/lassie v0.13.0
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -49,30 +49,24 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/huin/goupnp v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
+	github.com/ipfs/boxo v0.10.0 // indirect
 	github.com/ipfs/go-bitfield v1.1.0 // indirect
-	github.com/ipfs/go-block-format v0.1.1 // indirect
-	github.com/ipfs/go-blockservice v0.5.0 // indirect
+	github.com/ipfs/go-block-format v0.1.2 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
 	github.com/ipfs/go-graphsync v0.14.6 // indirect
-	github.com/ipfs/go-ipfs-blockstore v1.3.0 // indirect
 	github.com/ipfs/go-ipfs-delay v0.0.1 // indirect
-	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
-	github.com/ipfs/go-ipfs-exchange-interface v0.2.0 // indirect
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
-	github.com/ipfs/go-ipld-format v0.4.0 // indirect
-	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
+	github.com/ipfs/go-ipld-format v0.5.0 // indirect
 	github.com/ipfs/go-libipfs v0.6.1 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
-	github.com/ipfs/go-merkledag v0.10.0 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-peertaskqueue v0.8.1 // indirect
-	github.com/ipfs/go-unixfsnode v1.7.0 // indirect
-	github.com/ipfs/go-verifcid v0.0.2 // indirect
-	github.com/ipld/go-car/v2 v2.9.0 // indirect
+	github.com/ipfs/go-unixfsnode v1.7.1 // indirect
+	github.com/ipld/go-car/v2 v2.10.1 // indirect
 	github.com/ipld/go-codec-dagpb v1.6.0 // indirect
 	github.com/ipld/go-ipld-prime v0.20.1-0.20230329011551-5056175565b0 // indirect
 	github.com/ipni/go-libipni v0.0.8-0.20230425184153-86a1fcb7f7ff // indirect
@@ -89,7 +83,7 @@ require (
 	github.com/libp2p/go-libp2p v0.27.1 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.3.0 // indirect
 	github.com/libp2p/go-libp2p-record v0.2.0 // indirect
-	github.com/libp2p/go-libp2p-routing-helpers v0.6.1 // indirect
+	github.com/libp2p/go-libp2p-routing-helpers v0.7.0 // indirect
 	github.com/libp2p/go-mplex v0.7.0 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect
 	github.com/libp2p/go-nat v0.1.0 // indirect
@@ -113,7 +107,7 @@ require (
 	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
 	github.com/multiformats/go-multibase v0.2.0 // indirect
 	github.com/multiformats/go-multicodec v0.9.0 // indirect
-	github.com/multiformats/go-multihash v0.2.1 // indirect
+	github.com/multiformats/go-multihash v0.2.3 // indirect
 	github.com/multiformats/go-multistream v0.4.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.2 // indirect
