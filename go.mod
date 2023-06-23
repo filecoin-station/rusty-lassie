@@ -1,4 +1,4 @@
-module github.com/filecoin-station/rusty-lassie/go-lib
+module github.com/filecoin-station/rusty-lassie
 
 go 1.20
 
