@@ -103,9 +103,16 @@ fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDae
     unsafe { DAEMON.lock() }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DaemonConfig {
+    /// Directory where to store temporary files (CAR store).
+    ///
+    /// By default, Lassie stores temporary files in the OS-specific temp directory.
     pub temp_dir: Option<PathBuf>,
+
+    /// Port where to listen.
+    ///
+    /// By default, we ask the operating system to choose a free ephemeral port.
     pub port: u16,
 
     /// MaxBlocks optionally specifies the maximum number of blocks to fetch.
@@ -122,7 +129,8 @@ pub struct DaemonConfig {
     ///
     /// On timeout, the HTTP response will be aborted in a way that triggers a client error.
     ///
-    /// The default value is 20 seconds.
+    /// The default timeout is controlled by Go version of Lassie and you should not rely on any
+    /// particular value. Provide your own value if this timeout is important for you.
     pub provider_timeout: Option<Duration>,
 
     /// Specify a custom timeout for the entire retrieval process.
@@ -131,18 +139,6 @@ pub struct DaemonConfig {
     ///
     /// No timeout is enforced by default.
     pub global_timeout: Option<Duration>,
-}
-
-impl Default for DaemonConfig {
-    fn default() -> Self {
-        Self {
-            temp_dir: Default::default(),
-            port: Default::default(),
-            max_blocks: Default::default(),
-            provider_timeout: Some(Duration::from_secs(20)),
-            global_timeout: Some(Duration::from_secs(20)),
-        }
-    }
 }
 
 pub struct Daemon {
