@@ -109,17 +109,27 @@ pub struct DaemonConfig {
     pub port: u16,
 
     /// MaxBlocks optionally specifies the maximum number of blocks to fetch.
+    ///
+    /// When the requested CID contains more blocks than specified, the HTTP response will be
+    /// aborted in a way that trigger a client error.
     pub max_blocks: Option<u64>,
 
     /// Specify a custom timeout for retrieving data from a provider. Beyond this limit, when no
     /// data has been received, the retrieval will fail.
+    ///
+    /// At the moment, this configuration applies to Bitswap retrievals only and controls how
+    /// much time we allow for the storage provider to send us the next block.
+    ///
+    /// On timeout, the HTTP response will be aborted in a way that triggers a client error.
     ///
     /// The default value is 20 seconds.
     pub provider_timeout: Option<Duration>,
 
     /// Specify a custom timeout for the entire retrieval process.
     ///
-    /// The default value is 20 seconds.
+    /// On timeout, the HTTP response will be aborted in a way that triggers a client error.
+    ///
+    /// No timeout is enforced by default.
     pub global_timeout: Option<Duration>,
 }
 

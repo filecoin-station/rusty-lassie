@@ -1,3 +1,4 @@
+use pretty_assertions::assert_eq;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
@@ -65,12 +66,12 @@ fn configure_max_blocks() {
     let response = assert_ok_response(response);
 
     let mut content = Vec::new();
-    response
+    let error = response
         .into_reader()
         .read_to_end(&mut content)
-        .expect("cannot read response body");
+        .expect_err("response stream should have been aborted by the server");
 
-    assert_eq!(content.len(), 10);
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
 }
 
 #[test]
@@ -78,29 +79,27 @@ fn configure_global_timeout() {
     let _lock = setup_test_env();
 
     let daemon = Daemon::start(DaemonConfig {
-        global_timeout: Some(Duration::from_millis(100)),
+        global_timeout: Some(Duration::from_millis(1000)),
         ..DaemonConfig::default()
     })
     .expect("cannot start Lassie");
     let port = daemon.port();
     assert!(port > 0, "Lassie is listening on non-zero port number");
 
-    panic!("TODO")
-}
+    // XKCD Archives offered for exploration by IPFS Desktop
+    // This archive contains many blocks an takes long to download
+    let url =
+        format!("http://127.0.0.1:{port}/ipfs/QmdmQXB2mzChmMeKY47C43LxUdg1NDJ5MWcKMKxDu7RgQm");
+    let response = ureq::get(&url).call();
+    let response = assert_ok_response(response);
 
-#[test]
-fn configure_provider_timeout() {
-    let _lock = setup_test_env();
+    let mut content = Vec::new();
+    let error = response
+        .into_reader()
+        .read_to_end(&mut content)
+        .expect_err("response stream should have been aborted by the server");
 
-    let daemon = Daemon::start(DaemonConfig {
-        provider_timeout: Some(Duration::from_millis(100)),
-        ..DaemonConfig::default()
-    })
-    .expect("cannot start Lassie");
-    let port = daemon.port();
-    assert!(port > 0, "Lassie is listening on non-zero port number");
-
-    panic!("TODO")
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
 }
 
 fn setup_test_env() -> MutexGuard<'static, ()> {
