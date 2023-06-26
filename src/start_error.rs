@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
+use std::time::Duration;
 
 #[derive(Debug, PartialEq, Clone)]
 #[non_exhaustive]
@@ -8,6 +9,7 @@ pub enum StartError {
     OnlyOneInstanceAllowed,
     PathContainsNullByte(String),
     PathIsNotValidUtf8(PathBuf),
+    DurationIsTooLong(Duration),
     Lassie(String),
 }
 
@@ -27,6 +29,9 @@ impl Display for StartError {
                 path.display(),
             )),
             StartError::Lassie(msg) => f.write_str(msg),
+            StartError::DurationIsTooLong(d) => f.write_fmt(format_args!(
+                "duration {d:#?} is too long, Go limits the largest representable duration to approximately 290 years",
+            )),
         }
     }
 }

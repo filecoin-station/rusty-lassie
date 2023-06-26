@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
+use std::time::Duration;
 
 mod start_error;
 
@@ -86,6 +87,9 @@ struct GoDaemonConfig {
     temp_dir: *const c_char,
     port: u16,
     log_level: usize,
+    max_blocks: u64,
+    provider_timeout: i64,
+    global_timeout: i64,
 }
 
 struct GoDaemon {
@@ -101,8 +105,40 @@ fn get_global_daemon() -> std::sync::LockResult<MutexGuard<'static, Option<GoDae
 
 #[derive(Debug, Clone, Default)]
 pub struct DaemonConfig {
+    /// Directory where to store temporary files (CAR store).
+    ///
+    /// By default, Lassie stores temporary files in the OS-specific temp directory.
     pub temp_dir: Option<PathBuf>,
+
+    /// Port where to listen.
+    ///
+    /// By default, we ask the operating system to choose a free ephemeral port.
     pub port: u16,
+
+    /// MaxBlocks optionally specifies the maximum number of blocks to fetch.
+    ///
+    /// When the requested CID contains more blocks than specified, the HTTP response will be
+    /// aborted in a way that triggers a client error.
+    pub max_blocks: Option<u64>,
+
+    /// Specify a custom timeout for retrieving data from a provider. Beyond this limit, when no
+    /// data has been received, the retrieval will fail.
+    ///
+    /// At the moment, this configuration applies to Bitswap retrievals only and controls how
+    /// much time we allow for the storage provider to send us the next block.
+    ///
+    /// On timeout, the HTTP response will be aborted in a way that triggers a client error.
+    ///
+    /// The default timeout is controlled by Go version of Lassie and you should not rely on any
+    /// particular value. Provide your own value if this timeout is important for you.
+    pub provider_timeout: Option<Duration>,
+
+    /// Specify a custom timeout for the entire retrieval process.
+    ///
+    /// On timeout, the HTTP response will be aborted in a way that triggers a client error.
+    ///
+    /// No timeout is enforced by default.
+    pub global_timeout: Option<Duration>,
 }
 
 pub struct Daemon {
@@ -142,10 +178,24 @@ impl Daemon {
         } else {
             log::LevelFilter::Off
         };
+
+        let global_timeout = match config.global_timeout {
+            Some(d) => try_convert_duration_to_go_type(d)?,
+            None => 0,
+        };
+
+        let provider_timeout = match config.provider_timeout {
+            Some(d) => try_convert_duration_to_go_type(d)?,
+            None => 0,
+        };
+
         let go_config = GoDaemonConfig {
             temp_dir: temp_dir.as_ptr(),
             log_level: log_level as usize,
             port: config.port,
+            global_timeout,
+            provider_timeout,
+            max_blocks: config.max_blocks.unwrap_or(0),
         };
 
         // SAFETY:
@@ -207,6 +257,11 @@ impl Drop for Daemon {
         let GoDaemon { handler_thread } = maybe_daemon.take().unwrap();
         handler_thread.join().expect("Lassie handler panicked");
     }
+}
+
+fn try_convert_duration_to_go_type(from: Duration) -> Result<i64, StartError> {
+    // Go Duration type represents the elapsed time between two instants as an int64 nanosecond count.
+    i64::try_from(from.as_nanos()).map_err(|_| StartError::DurationIsTooLong(from))
 }
 
 #[cfg(test)]
