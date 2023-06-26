@@ -118,7 +118,7 @@ pub struct DaemonConfig {
     /// MaxBlocks optionally specifies the maximum number of blocks to fetch.
     ///
     /// When the requested CID contains more blocks than specified, the HTTP response will be
-    /// aborted in a way that trigger a client error.
+    /// aborted in a way that triggers a client error.
     pub max_blocks: Option<u64>,
 
     /// Specify a custom timeout for retrieving data from a provider. Beyond this limit, when no
