@@ -273,14 +273,18 @@ fn try_convert_duration_to_go_type(from: Duration) -> Result<i64, StartError> {
     i64::try_from(from.as_nanos()).map_err(|_| StartError::DurationIsTooLong(from))
 }
 
+// Why we are disabling clippy::missing_panics_docs: This function never panics. The only `unwrap()`
+// call is on the line handling the `None` case and we know it's not going to panic because "" does
+// not contain any null bytes.
 #[allow(clippy::missing_panics_doc)]
-// ^^^ We know it's safe to unwrap because "" does not contain any null bytes
 fn access_token_as_cstring(access_token: Option<String>) -> Result<CString, StartError> {
     match access_token {
         Some(token) => {
             CString::new(token.clone()).map_err(|_| StartError::AccessTokenContainsNullByte(token))
         }
-        None => Ok(CString::new("").unwrap()),
+        None => Ok(CString::new("")
+            // This unwrap() never panics because "" does not contain any null bytes.
+            .unwrap()),
     }
 }
 
