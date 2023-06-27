@@ -192,14 +192,12 @@ fn assert_ok_response(response: Result<ureq::Response, ureq::Error>) -> ureq::Re
 
 fn assert_response_status_code(response: Result<ureq::Response, ureq::Error>, expected_code: u16) {
     match response {
-        #[allow(clippy::manual_assert)]
         Err(ureq::Error::Status(code, response)) => {
-            if code != expected_code {
-                panic!(
-                    "Request failed with unexpected status code. Wanted: {expected_code} Found: {code}. Body:\n{}\n==EOF==",
-                    response.into_string().expect("cannot read response body"),
-                );
-            }
+            assert!(
+                code == expected_code,
+                "Request failed with unexpected status code. Wanted: {expected_code} Found: {code}. Body:\n{}\n==EOF==",
+                response.into_string().expect("cannot read response body"),
+            );
         }
 
         Err(err) => {
