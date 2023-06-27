@@ -102,6 +102,68 @@ fn configure_global_timeout() {
     assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
 }
 
+#[test]
+fn it_rejects_anonymous_requests_when_configured_with_access_token() {
+    let _lock = setup_test_env();
+
+    let daemon = Daemon::start(DaemonConfig {
+        access_token: Some("super_secret".to_string()),
+        ..DaemonConfig::default()
+    })
+    .expect("cannot start Lassie");
+    let port = daemon.port();
+    assert!(port > 0, "Lassie is listening on non-zero port number");
+
+    let url = format!(
+        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+    );
+    let response = ureq::get(&url)
+        .set("Accept", "application/vnd.ipld.car")
+        .call();
+
+    match response {
+        Err(ureq::Error::Status(401, _response)) => {
+            // test passed
+        }
+        Err(ureq::Error::Status(code, response)) => {
+            panic!(
+                "Request failed with unexpected status {code}. Body:\n{}\n==EOF==",
+                response.into_string().expect("cannot read response body"),
+            );
+        }
+
+        Err(err) => {
+            panic!("Request failed with unexpected error: {err:?}");
+        }
+
+        Ok(_response) => {
+            panic!("Request should have failed with 401 Unauthorized, it succeeded instead.");
+        }
+    }
+}
+
+#[test]
+fn it_allows_authorized_requests_when_configured_with_access_token() {
+    let _lock = setup_test_env();
+
+    let daemon = Daemon::start(DaemonConfig {
+        access_token: Some("super_secret".to_string()),
+        ..DaemonConfig::default()
+    })
+    .expect("cannot start Lassie");
+    let port = daemon.port();
+    assert!(port > 0, "Lassie is listening on non-zero port number");
+
+    let url = format!(
+        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+    );
+    let response = ureq::get(&url)
+        .set("Accept", "application/vnd.ipld.car")
+        .set("Authorization", "Bearer super_secret")
+        .call();
+    assert_ok_response(response);
+}
+
 fn setup_test_env() -> MutexGuard<'static, ()> {
     let _ = env_logger::builder().is_test(true).try_init();
     let lock = TEST_GUARD.lock().expect("cannot obtain global test lock. This typically happens when one of the test fails; the problem should go away after you fix the test failure.");

@@ -18,6 +18,7 @@ typedef struct {
 	uint64_t max_blocks;
 	int64_t provider_timeout;
 	int64_t global_timeout;
+	const char* access_token;
 } daemon_config_t;
 
 typedef struct {
@@ -77,12 +78,18 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 	}
 
 	var tempDir string = C.GoString(cfg.temp_dir)
+	accessToken := C.GoString(cfg.access_token)
+
 	if debug_log_enabled {
-		tempDirStr := "`" + tempDir + "`"
+		tempDirStr := fmt.Sprintf("`%s`", tempDir)
 		if tempDir == "" {
 			tempDirStr = "<empty>"
 		}
-		debug(fmt.Sprintf("Lassie configuration:\n  log_level=%d\n  port=%d\n  temp_dir=`%v`", cfg.log_level, cfg.port, tempDirStr))
+		accessTokenStr := fmt.Sprintf("`%s`", accessToken)
+		if accessToken == "" {
+			accessTokenStr = "<not configured>"
+		}
+		debug(fmt.Sprintf("Lassie configuration:\n  log_level=%d\n  port=%d\n  temp_dir=%v\n  accessToken=%v", cfg.log_level, cfg.port, tempDirStr, accessTokenStr))
 	}
 
 	lassieOpts := []lassie.LassieOption{
@@ -117,6 +124,7 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 		Port:                uint(cfg.port),
 		TempDir:             tempDir,
 		MaxBlocksPerRequest: uint64(cfg.max_blocks),
+		AccessToken:         accessToken,
 	})
 
 	if err != nil {

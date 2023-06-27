@@ -90,6 +90,7 @@ struct GoDaemonConfig {
     max_blocks: u64,
     provider_timeout: i64,
     global_timeout: i64,
+    access_token: *const c_char,
 }
 
 struct GoDaemon {
@@ -139,6 +140,11 @@ pub struct DaemonConfig {
     ///
     /// No timeout is enforced by default.
     pub global_timeout: Option<Duration>,
+
+    /// Require retrieval requests to provide authorization header with the configured access token.
+    ///
+    /// For example: `Authorization: Bearer {token}`
+    pub access_token: Option<String>,
 }
 
 pub struct Daemon {
@@ -189,6 +195,8 @@ impl Daemon {
             None => 0,
         };
 
+        let access_token = access_token_as_cstring(config.access_token)?;
+
         let go_config = GoDaemonConfig {
             temp_dir: temp_dir.as_ptr(),
             log_level: log_level as usize,
@@ -196,6 +204,7 @@ impl Daemon {
             global_timeout,
             provider_timeout,
             max_blocks: config.max_blocks.unwrap_or(0),
+            access_token: access_token.as_ptr(),
         };
 
         // SAFETY:
@@ -262,6 +271,17 @@ impl Drop for Daemon {
 fn try_convert_duration_to_go_type(from: Duration) -> Result<i64, StartError> {
     // Go Duration type represents the elapsed time between two instants as an int64 nanosecond count.
     i64::try_from(from.as_nanos()).map_err(|_| StartError::DurationIsTooLong(from))
+}
+
+#[allow(clippy::missing_panics_doc)]
+// ^^^ We know it's safe to unwrap because "" does not contain any null bytes
+fn access_token_as_cstring(access_token: Option<String>) -> Result<CString, StartError> {
+    match access_token {
+        Some(token) => {
+            CString::new(token.clone()).map_err(|_| StartError::AccessTokenContainsNullByte(token))
+        }
+        None => Ok(CString::new("").unwrap()),
+    }
 }
 
 #[cfg(test)]
