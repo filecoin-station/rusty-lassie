@@ -90,6 +90,7 @@ struct GoDaemonConfig {
     max_blocks: u64,
     provider_timeout: i64,
     global_timeout: i64,
+    access_token: *const c_char,
 }
 
 struct GoDaemon {
@@ -139,6 +140,11 @@ pub struct DaemonConfig {
     ///
     /// No timeout is enforced by default.
     pub global_timeout: Option<Duration>,
+
+    /// Require retrieval requests to provide authorization header with the configured access token.
+    ///
+    /// For example: `Authorization: Bearer {token}`
+    pub access_token: Option<String>,
 }
 
 pub struct Daemon {
@@ -189,6 +195,10 @@ impl Daemon {
             None => 0,
         };
 
+        let access_token = config.access_token.unwrap_or(String::new());
+        let access_token = CString::new(access_token.clone())
+            .map_err(|_| StartError::AccessTokenContainsNullByte(access_token.to_string()))?;
+
         let go_config = GoDaemonConfig {
             temp_dir: temp_dir.as_ptr(),
             log_level: log_level as usize,
@@ -196,6 +206,7 @@ impl Daemon {
             global_timeout,
             provider_timeout,
             max_blocks: config.max_blocks.unwrap_or(0),
+            access_token: access_token.as_ptr(),
         };
 
         // SAFETY:

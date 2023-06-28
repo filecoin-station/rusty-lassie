@@ -11,6 +11,7 @@ pub enum StartError {
     PathIsNotValidUtf8(PathBuf),
     DurationIsTooLong(Duration),
     Lassie(String),
+    AccessTokenContainsNullByte(String),
 }
 
 impl Display for StartError {
@@ -31,6 +32,9 @@ impl Display for StartError {
             StartError::Lassie(msg) => f.write_str(msg),
             StartError::DurationIsTooLong(d) => f.write_fmt(format_args!(
                 "duration {d:#?} is too long, Go limits the largest representable duration to approximately 290 years",
+            )),
+            StartError::AccessTokenContainsNullByte(token) => f.write_fmt(format_args!(
+                "null bytes are not allowed in the access token (value: {token:?})",
             )),
         }
     }
