@@ -121,7 +121,7 @@ fn it_rejects_anonymous_requests_when_configured_with_access_token() {
         .set("Accept", "application/vnd.ipld.car")
         .call();
 
-    assert_response_status_code(response, 401);
+    assert_response_error(response, 401);
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn it_rejects_incorrect_authorization_when_configured_with_access_token() {
         .set("Authorization", "Bearer wrong-token")
         .call();
 
-    assert_response_status_code(response, 401);
+    assert_response_error(response, 401);
 }
 
 fn setup_test_env() -> MutexGuard<'static, ()> {
@@ -190,7 +190,7 @@ fn assert_ok_response(response: Result<ureq::Response, ureq::Error>) -> ureq::Re
     response
 }
 
-fn assert_response_status_code(response: Result<ureq::Response, ureq::Error>, expected_code: u16) {
+fn assert_response_error(response: Result<ureq::Response, ureq::Error>, expected_code: u16) {
     match response {
         Err(ureq::Error::Status(code, response)) => {
             assert!(
@@ -205,7 +205,7 @@ fn assert_response_status_code(response: Result<ureq::Response, ureq::Error>, ex
         }
 
         Ok(_response) => {
-            panic!("Request should have failed with 401 Unauthorized, it succeeded instead.");
+            panic!("Request should have failed with {expected_code}, it succeeded instead.");
         }
     }
 }
