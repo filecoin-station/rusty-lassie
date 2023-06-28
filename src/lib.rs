@@ -149,6 +149,7 @@ pub struct DaemonConfig {
 
 pub struct Daemon {
     port: u16,
+    access_token: Option<String>,
 }
 
 impl Daemon {
@@ -195,7 +196,7 @@ impl Daemon {
             None => 0,
         };
 
-        let access_token = config.access_token.unwrap_or(String::new());
+        let access_token = config.access_token.clone().unwrap_or(String::new());
         let access_token = CString::new(access_token.clone())
             .map_err(|_| StartError::AccessTokenContainsNullByte(access_token.to_string()))?;
 
@@ -237,12 +238,20 @@ impl Daemon {
         *maybe_daemon = Some(GoDaemon { handler_thread });
 
         log::info!("Lassie Daemon is listening on port {}", port);
-        Ok(Daemon { port })
+        Ok(Daemon {
+            port,
+            access_token: config.access_token,
+        })
     }
 
     #[must_use]
     pub fn port(&self) -> u16 {
         self.port
+    }
+
+    #[must_use]
+    pub fn access_token(&self) -> &Option<String> {
+        &self.access_token
     }
 }
 
@@ -324,6 +333,19 @@ mod test {
             }
             Err(err) => panic!("unexpected error while starting Lassie on port 1: {err}"),
         };
+    }
+
+    #[test]
+    fn start_returns_access_token() {
+        let token = Some("super_secret".to_string());
+        let _lock = setup_test_env();
+        let result = Daemon::start(DaemonConfig {
+            access_token: token.clone(),
+            ..DaemonConfig::default()
+        })
+        .expect("cannot start Lassie daemon");
+
+        assert_eq!(*result.access_token(), token);
     }
 
     fn setup_test_env() -> MutexGuard<'static, ()> {
