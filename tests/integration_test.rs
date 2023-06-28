@@ -141,7 +141,10 @@ fn it_allows_authorized_requests_when_configured_with_access_token() {
     );
     let response = ureq::get(&url)
         .set("Accept", "application/vnd.ipld.car")
-        .set("Authorization", "Bearer super_secret")
+        .set(
+            "Authorization",
+            &format!("Bearer {}", daemon.access_token().as_ref().unwrap()),
+        )
         .call();
     assert_ok_response(response);
 }
