@@ -2,7 +2,7 @@ module github.com/filecoin-station/rusty-lassie
 
 go 1.20
 
-require github.com/filecoin-project/lassie v0.14.2
+require github.com/filecoin-project/lassie v0.14.3
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/ipfs/go-block-format v0.1.2 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
-	github.com/ipfs/go-graphsync v0.14.6 // indirect
+	github.com/ipfs/go-graphsync v0.14.7 // indirect
 	github.com/ipfs/go-ipfs-delay v0.0.1 // indirect
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
