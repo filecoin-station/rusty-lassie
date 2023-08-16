@@ -21,7 +21,7 @@ build = "build.rs"
 log = "0.4.17"
 
 [dev-dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.74"
 env_logger = "0.10.0"
 pretty_assertions = "1.4.0"
 ureq = "2.7.1"
