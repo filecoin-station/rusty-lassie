@@ -2,7 +2,7 @@ module github.com/filecoin-station/rusty-lassie
 
 go 1.20
 
-require github.com/filecoin-project/lassie v0.14.3
+require github.com/filecoin-project/lassie v0.15.0
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
