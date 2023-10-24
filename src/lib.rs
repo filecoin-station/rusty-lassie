@@ -196,7 +196,7 @@ impl Daemon {
             None => 0,
         };
 
-        let access_token = config.access_token.clone().unwrap_or(String::new());
+        let access_token = config.access_token.clone().unwrap_or_default();
         let access_token = CString::new(access_token.clone())
             .map_err(|_| StartError::AccessTokenContainsNullByte(access_token.to_string()))?;
 
