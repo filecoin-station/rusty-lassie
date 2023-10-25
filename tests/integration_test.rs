@@ -31,7 +31,7 @@ fn start_daemon_and_request_cid() {
 
     assert_eq!(
         response.header("Content-Type"),
-        Some("application/vnd.ipld.car; version=1")
+        Some("application/vnd.ipld.car;version=1;order=dfs;dups=y")
     );
 
     let mut content = Vec::new();
