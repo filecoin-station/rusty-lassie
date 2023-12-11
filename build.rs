@@ -3,8 +3,15 @@ use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=go-lib/go.sum");
+    println!("cargo:rerun-if-changed=go.sum");
     println!("cargo:rerun-if-changed=go-lib/lassie.go");
+
+    let v = get_lassie_version();
+    assert_eq!(
+        v, "0.21.0",
+        "New Lassie version detected. Update the build version in build.rs."
+    );
+    println!("cargo:rustc-env=LASSIE_VERSION=0.21.0-2cf1121");
 
     build_lassie();
 }
@@ -131,4 +138,22 @@ fn build_lassie() {
     let dll_out = format!("{out_dir}\\..\\..\\..\\golassie.dll");
     std::fs::copy(&out_file, &dll_out)
         .unwrap_or_else(|_| panic!("cannot copy {out_file} to {dll_out}"));
+}
+
+const GO_SUM_LASSIE: &str = "github.com/filecoin-project/lassie v";
+
+fn get_lassie_version() -> String {
+    let text = std::fs::read_to_string("go.sum").expect("cannot open go.sum");
+
+    for ln in text.lines() {
+        if ln.starts_with(GO_SUM_LASSIE) {
+            let ln = &ln[GO_SUM_LASSIE.len()..];
+            match ln.split_once(' ') {
+                Some((v, _)) => return v.to_owned(),
+                None => panic!("Malformed go.sum line: {ln}"),
+            }
+        }
+    }
+
+    panic!("lassie not found in go.sum file")
 }
