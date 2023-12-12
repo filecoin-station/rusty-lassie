@@ -147,9 +147,8 @@ fn get_lassie_version() -> String {
     let text = std::fs::read_to_string("go.sum").expect("cannot open go.sum");
 
     for ln in text.lines() {
-        if ln.starts_with(GO_SUM_LASSIE) {
-            let ln = &ln[GO_SUM_LASSIE.len()..];
-            match ln.split_once(' ') {
+        if let Some(spec) = ln.strip_prefix(GO_SUM_LASSIE) {
+            match spec.split_once(' ') {
                 Some((v, _)) => return v.to_owned(),
                 None => panic!("Malformed go.sum line: {ln}"),
             }
