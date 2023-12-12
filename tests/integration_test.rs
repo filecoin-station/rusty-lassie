@@ -51,7 +51,7 @@ fn configure_max_blocks() {
     let _lock = setup_test_env();
 
     let daemon = Daemon::start(DaemonConfig {
-        max_blocks: Some(10),
+        max_blocks: Some(1),
         ..DaemonConfig::default()
     })
     .expect("cannot start Lassie");
