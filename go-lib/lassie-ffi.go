@@ -19,6 +19,7 @@ typedef struct {
 	int64_t provider_timeout;
 	int64_t global_timeout;
 	const char* access_token;
+	const char* lassie_user_agent;
 } daemon_config_t;
 
 typedef struct {
@@ -42,6 +43,7 @@ import (
 	"time"
 	"unsafe"
 
+	lassieBuild "github.com/filecoin-project/lassie/pkg/build"
 	"github.com/filecoin-project/lassie/pkg/lassie"
 	httpserver "github.com/filecoin-project/lassie/pkg/server/http"
 )
@@ -79,6 +81,7 @@ func InitDaemon(cfg *C.daemon_config_t) C.daemon_init_result_t {
 
 	var tempDir string = C.GoString(cfg.temp_dir)
 	accessToken := C.GoString(cfg.access_token)
+	lassieBuild.UserAgent = C.GoString(cfg.lassie_user_agent)
 
 	if debug_log_enabled {
 		tempDirStr := fmt.Sprintf("`%s`", tempDir)
