@@ -91,6 +91,7 @@ struct GoDaemonConfig {
     provider_timeout: i64,
     global_timeout: i64,
     access_token: *const c_char,
+    lassie_user_agent: *const c_char,
 }
 
 struct GoDaemon {
@@ -200,6 +201,13 @@ impl Daemon {
         let access_token = CString::new(access_token.clone())
             .map_err(|_| StartError::AccessTokenContainsNullByte(access_token.to_string()))?;
 
+        // See https://github.com/filecoin-project/lassie/pull/240
+        let lassie_version = env!("LASSIE_VERSION");
+        let lassie_user_agent = format!("lassie/v{lassie_version}");
+        let lassie_user_agent = CString::new(lassie_user_agent.clone()).map_err(|_| {
+            StartError::Lassie("Internal error: invalid Lassie version.".to_string())
+        })?;
+
         let go_config = GoDaemonConfig {
             temp_dir: temp_dir.as_ptr(),
             log_level: log_level as usize,
@@ -208,6 +216,7 @@ impl Daemon {
             provider_timeout,
             max_blocks: config.max_blocks.unwrap_or(0),
             access_token: access_token.as_ptr(),
+            lassie_user_agent: lassie_user_agent.as_ptr(),
         };
 
         // SAFETY:
