@@ -7,11 +7,12 @@ fn main() {
     println!("cargo:rerun-if-changed=go-lib/lassie.go");
 
     let v = get_lassie_version();
-    assert_eq!(
-        v, "0.21.0",
-        "New Lassie version detected. Update the build version in build.rs."
-    );
-    println!("cargo:rustc-env=LASSIE_VERSION=0.21.0-2cf1121");
+    // assert_eq!(
+    //     v, "0.21.0",
+    //     "New Lassie version detected. Update the build version in build.rs."
+    // );
+    // println!("cargo:rustc-env=LASSIE_VERSION=0.21.0-2cf1121");
+    println!("cargo:rustc-env=LASSIE_VERSION={v}-rs");
 
     build_lassie();
 }
