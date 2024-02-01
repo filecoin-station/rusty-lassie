@@ -17,7 +17,7 @@ fn start_daemon_and_request_cid() {
     assert!(port > 0, "Lassie is listening on non-zero port number");
 
     let url = format!(
-        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+        "http://127.0.0.1:{port}/ipfs/bafkreih25dih6ug3xtj73vswccw423b56ilrwmnos4cbwhrceudopdp5sq"
     );
     let response = ureq::get(&url)
         .set("Accept", "application/vnd.ipld.car")
@@ -42,7 +42,7 @@ fn start_daemon_and_request_cid() {
 
     assert_eq!(
         content,
-        include_bytes!("testdata/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni.car")
+        include_bytes!("testdata/bafkreih25dih6ug3xtj73vswccw423b56ilrwmnos4cbwhrceudopdp5sq.car")
     );
 }
 
@@ -115,7 +115,7 @@ fn it_rejects_anonymous_requests_when_configured_with_access_token() {
     assert!(port > 0, "Lassie is listening on non-zero port number");
 
     let url = format!(
-        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+        "http://127.0.0.1:{port}/ipfs/bafkreih25dih6ug3xtj73vswccw423b56ilrwmnos4cbwhrceudopdp5sq"
     );
     let response = ureq::get(&url)
         .set("Accept", "application/vnd.ipld.car")
@@ -137,7 +137,7 @@ fn it_allows_authorized_requests_when_configured_with_access_token() {
     assert!(port > 0, "Lassie is listening on non-zero port number");
 
     let url = format!(
-        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+        "http://127.0.0.1:{port}/ipfs/bafkreih25dih6ug3xtj73vswccw423b56ilrwmnos4cbwhrceudopdp5sq"
     );
     let response = ureq::get(&url)
         .set("Accept", "application/vnd.ipld.car")
@@ -162,7 +162,7 @@ fn it_rejects_incorrect_authorization_when_configured_with_access_token() {
     assert!(port > 0, "Lassie is listening on non-zero port number");
 
     let url = format!(
-        "http://127.0.0.1:{port}/ipfs/bafybeib36krhffuh3cupjml4re2wfxldredkir5wti3dttulyemre7xkni"
+        "http://127.0.0.1:{port}/ipfs/bafkreih25dih6ug3xtj73vswccw423b56ilrwmnos4cbwhrceudopdp5sq"
     );
     let response = ureq::get(&url)
         .set("Accept", "application/vnd.ipld.car")
